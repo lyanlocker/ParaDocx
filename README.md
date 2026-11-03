@@ -1,19 +1,28 @@
 # ParaDocx
 
-Plataforma de documentos investigativos interativos para RPG.
+Plataforma para criar documentos investigativos de RPG e gerenciar inventários individuais de jogadores.
 
-## Recursos
-- Campanhas separadas por mestre, jogadores e código de convite
-- Biblioteca inicial de modelos
-- Editor híbrido: preenchimento rápido e edição livre de camadas
-- Frente e verso, além de mensagens reveladas por lanterna UV
-- Inventário individual e transferência de posse
-- Área reservada para mecânicas futuras
+## Acesso
 
-## Stack
-React, Vite, Supabase (Auth, Postgres, Realtime) e Vercel.
+- **Mestre (mestre01):** área de administração protegida por conta Supabase Auth com e-mail e senha. `mestre01` é o identificador exibido na interface; ainda é necessário configurar a conta real do mestre.
+- **Jogadores:** não criam conta, não entram com e-mail nem senha. O mestre cria uma vaga com nome e copia um link individual secreto.
+- **Links:** cada link contém um segredo aleatório de 256 bits no fragmento da URL (`#/player/<token>`). O banco armazena apenas SHA-256 do token. O mestre pode reemitir/revogar links.
+- **Posse:** documentos pertencem a uma única vaga de jogador; a entrega para outro jogador atualiza a posse atomicamente e remove o acesso anterior.
+- **Mecânicas:** área reservada, sem funcionalidade ativa.
 
-## Desenvolvimento
-Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` em `.env.local` (exemplo em `.env.example`), execute `npm install` e `npm run dev`.
+## Editor
+Modelos com campos rápidos e edição livre por camadas, frente e verso, mensagens reveladas pela luz negra.
 
-**Observação:** a versão inicial ainda precisa de testes ponta a ponta com mais de um jogador, revisão de segurança e aperfeiçoamento do editor.
+## Tecnologias
+React + Vite, Supabase Auth/Postgres/RLS/Edge Functions e Vercel.
+
+## Desenvolvimento local
+1. Copie `.env.example` para `.env.local` e configure as chaves públicas (nunca use service role no browser).
+2. Execute `npm install` e `npm run dev`.
+3. Para banco novo, siga `supabase/schema.sql` e as migrações em `supabase/migrations/`.
+4. Para link de jogador, implante a função `supabase/functions/player-access/index.ts` com `verify_jwt=false`. A função autentica internamente cada chamada pelo token privado; sua credencial service role permanece somente no servidor.
+
+## Status
+A primeira implementação está publicada. Testes de uso real entre dois jogadores, contas de mestre e revisão de segurança/UX ainda são necessários.
+
+**Importante:** o link é uma chave de acesso. Quem obtiver o link poderá acessar aquele jogador; reemitir o link revoga o anterior. URLs individuais não devem aparecer em repositórios, capturas de tela ou logs.
