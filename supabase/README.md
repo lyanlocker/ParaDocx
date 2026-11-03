@@ -1,28 +1,27 @@
-# Supabase - ParaDocx
+# Supabase no ParaDocx
 
-O Supabase conectado à aplicação já recebeu a estrutura inicial e as políticas de acesso. O arquivo `schema.sql` documenta o esquema para **um banco Supabase novo**, e não deve ser executado novamente no banco atual.
+## Esquema atual
+O projeto Supabase conectado já recebeu a migração inicial e as migrações incrementais. `schema.sql` é um retrato da base original para banco novo; o modelo de acesso sem cadastro de jogadores é adicionado em `migrations/20261103101306_player_seat_private_links.sql`.
 
-## Modelo de acesso
+O modelo atual tem:
+- `campaigns`: mestre autenticado, nome e limite de vagas.
+- `members`: legado de autenticação; apenas o mestre usa Auth no fluxo novo.
+- `player_seats`: vagas dos jogadores. Nomes e hashes de tokens; nunca guardar os links em claro.
+- `documents.holder_seat_id`: possuidor atual; somente mestre pode consultar pelo Data API, e o jogador consulta pelo serviço autenticado com token.
+- `player_transfers`: histórico de posse entre jogadores.
+- `player-access`: Supabase Edge Function com `verify_jwt=false`, autenticação manual por token forte e checagem de posse. Chave service role exclusivamente no ambiente da função.
 
-- `campaigns`: cada campanha possui um mestre (`owner_id`) e código de convite único.
-- `members`: participantes e papéis de mestre/jogador. Entrada por chamada autenticada `join_campaign`.
-- `documents`: cada registro é **uma instância única**. O mestre vê todos os documentos; um jogador só lê os publicados de que é proprietário (`holder_id`).
-- `transfers`: histórico das trocas. A função autenticada `transfer_document` bloqueia a linha antes de atualizar o proprietário, impedindo transferências concorrentes.
-- `private`: funções auxiliares de RLS e triggers; esquema fora da API pública.
+## Segurança e uso
+- O banco tem RLS para as tabelas expostas. RPCs de criação/reemissão/desativação verificam o dono da campanha.
+- O mestre distribui documentos pela `holder_seat_id`; não usar o campo legado `holder_id`.
+- O link de cada jogador é um segredo de 256 bits, em URL fragment (`#/player/<token>`) e não é transmitido ao servidor de páginas. A Edge Function recebe o token em POST.
+- Tokens de jogadores são rotacionáveis e revogáveis; a troca de dono ocorre em transação PostgreSQL com lock.
+- A autorização de leitura do jogador ocorre no backend; nunca buscar todos os documentos com a chave publishable do frontend.
+- Funções `SECURITY DEFINER` são de privilégio elevado e devem manter verificações rigorosas.
+- As funções legadas `join_campaign` e `transfer_document` tiveram execução revogada de `authenticated`.
 
-## Segurança
-
-- Todas as tabelas públicas possuem RLS.
-- O frontend utiliza somente a chave publishable. Nunca envie uma chave de service role para Vite.
-- As funções `join_campaign` e `transfer_document` são `SECURITY DEFINER` intencionalmente, limitadas ao papel `authenticated` e com verificações explícitas de identidade, campanha e posse. Devem ser auditadas em toda mudança.
-- Documentos secretos não ficam visíveis aos jogadores antes de sua entrega.
-- Não compartilhar URL de Storage público para arquivos secretos; preferir bucket privado com políticas específicas.
-
-## Testes pendentes
-
-- Criar contas reais separadas de mestre e dois jogadores.
-- Validar entrada por convite, limite de membros, isolamento entre campanhas e RLS.
-- Entregar um documento e garantir que o jogador anterior perde acesso após transferi-lo.
-- Testar simultaneidade das transferências e atualizações via Realtime.
-
-Não executamos esses testes ponta a ponta com contas reais ainda.
+## Pendências
+- Configurar a identidade real do mestre e revisar a política de registro público no Supabase Auth.
+- Testar com contas de mestre e múltiplos links de jogadores.
+- Verificar o fluxo de links revogados, transferência simultânea e atualizações periódicas.
+- Revisar os avisos do Supabase Database Linter de funções elevadas: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
