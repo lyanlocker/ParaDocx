@@ -61,3 +61,13 @@ h1,h2,h3{font-family:'Libre Baskerville',Georgia,serif;font-weight:400}h1{font-s
 .player-message{text-align:center;margin:12vh auto;max-width:650px}
 .player-message p{color:#bac8b7;line-height:1.7}
 @media(max-width:760px){.player-main{padding:33px 14px}.player-topbar{padding:12px 15px}.player-topbar .top-label{display:none}.seat-toolbar,.seat-toolbar>form{display:block}.seat-toolbar>form>*{margin-bottom:12px}.limit-control{margin-top:12px}.seat-actions{width:100%}.transfer-inputs{flex-wrap:wrap}.transfer-inputs select,.transfer-inputs button{width:100%}.player-reader>.document-frame{padding:9px}.player-heading{align-items:flex-start}}
+
+.auth-setup-hint{margin:17px 0 0;color:#94a591;font-size:11px;line-height:1.7}
+.activation-screen{min-height:100vh;background:radial-gradient(circle at 53% 21%,#263429 0,#151b16 60%);padding:50px 18px;color:#eee6d7}
+.activation-brand{font-family:'Libre Baskerville',Georgia,serif;font-size:18px;font-weight:700;text-align:center;color:#ddc38a;letter-spacing:1.3px}
+.activation-card{max-width:540px;margin:65px auto 0;background:#202a22;border:1px solid #526149;border-radius:14px;padding:40px;box-shadow:0 25px 60px #0007}
+.activation-card h1{font-size:36px;margin:15px 0}
+.activation-card>p{color:#aebdab;line-height:1.8;font-size:14px;margin-bottom:25px}
+.activation-card form{display:grid;gap:17px}
+.activation-card>small{display:block;color:#a5b49d;line-height:1.65;margin-top:19px;font-size:11px}
+@media(max-width:760px){.activation-card{margin:32px auto 0;padding:23px}.activation-card h1{font-size:30px}}
