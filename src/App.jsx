@@ -3,8 +3,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { supabase as db } from './lib/supabase';
 import { templates, newPages } from './data/templates';
 import PlayerPortal from './PlayerPortal.jsx';
+import MasterSetup from './MasterSetup.jsx';
+import {masterAuth} from './lib/masterAuth.js';
 
 const readPlayerToken = () => (window.location.hash.match(/^#\/player\/([a-f0-9]{64})$/) || [])[1] || '';
+const readMasterSetupToken = () => (window.location.hash.match(/^#\/master-setup\/([a-f0-9]{64})$/) || [])[1] || '';
 
 const id = () => Math.random().toString(36).slice(2, 11);
 const getTemplate = (key) => templates.find(t => t.id === key) || templates[0];
@@ -65,7 +68,6 @@ function Sheet({ pages, side, paper, editable, selected, onSelect, onDrag }) {
 export default function App() {
   const [session, setSession] = useState(null);
   const [checking, setChecking] = useState(true);
-  const [register, setRegister] = useState(false);
   const [notice, setNotice] = useState('');
   const [campaigns, setCampaigns] = useState([]);
   const [campaign, setCampaign] = useState(null);
@@ -75,6 +77,7 @@ export default function App() {
   const [newPlayerName,setNewPlayerName] = useState('');
   const [limitDraft,setLimitDraft] = useState('5');
   const [playerToken,setPlayerToken] = useState(readPlayerToken);
+  const [setupToken,setSetupToken]=useState(readMasterSetupToken);
   const [documents, setDocuments] = useState([]);
   const [screen, setScreen] = useState('home');
   const [campaignName, setCampaignName] = useState('');
@@ -95,7 +98,7 @@ export default function App() {
   const selectedLayer = (pages?.[side] || []).find(l => l.id === selected);
 
   useEffect(() => {
-    const onHashChange=()=>setPlayerToken(readPlayerToken());
+    const onHashChange=()=>{setPlayerToken(readPlayerToken());setSetupToken(readMasterSetupToken());};
     window.addEventListener('hashchange',onHashChange);
     return ()=>window.removeEventListener('hashchange',onHashChange);
   },[]);
@@ -138,14 +141,15 @@ export default function App() {
   }
   async function login(e) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const email = String(form.get('email'));
-    const password = String(form.get('password'));
+    const password=String(new FormData(e.currentTarget).get('password')||'');
     setWorking(true);
-    const r = register ? await db.auth.signUp({email,password}) : await db.auth.signInWithPassword({email,password});
-    setWorking(false);
-    if (r.error) setNotice(r.error.message);
-    else setNotice(register ? 'Conta criada! Verifique seu e-mail para confirmar o cadastro, se solicitado.' : 'Bem-vindo ao ParaDocx.');
+    try{
+      const auth = await masterAuth('login',{username:'mestre01',password});
+      const {error}=await db.auth.setSession({access_token:auth.access_token,refresh_token:auth.refresh_token});
+      if(error)throw error;
+      setNotice('Bem-vindo ao arquivo do mestre.');
+    }catch(error){setNotice(error.message);}
+    finally{setWorking(false);}
   }
   async function createCampaign(e) {
     e.preventDefault();setWorking(true);
@@ -246,6 +250,7 @@ export default function App() {
   }
 
   if(playerToken && db)return <PlayerPortal token={playerToken}/>;
+  if(setupToken && db)return <MasterSetup token={setupToken} onComplete={()=>{window.location.hash='';setSetupToken('');setNotice('Mestre01 ativado. Entre com a senha que acabou de criar.')}}/>;
   if(checking)return <div className="splash">✦ Carregando o arquivo...</div>;
   if(!db)return <div className="splash"><h1>ParaDocx</h1><p>Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY na Vercel.</p></div>;
 
@@ -260,7 +265,15 @@ export default function App() {
     <main className="main">
       <header className="top-bar"><span>PARADOCX / {campaign?.name?.toUpperCase()||'ARQUIVO'} / {screen.toUpperCase()}</span><span className="top-label">◉ AMBIENTE DE INVESTIGAÇÃO</span></header>
       {notice&&<div className="toast" role="status"><span>{notice}</span><button onClick={()=>setNotice('')} aria-label="Fechar aviso">×</button></div>}
-      {!session ? <div className="auth-screen"><div className="eyebrow">ACESSO EXCLUSIVO DO MESTRE · mestre01</div><h1>Todo mistério começa<br/><em>com um documento.</em></h1><p>Crie pistas, revele mensagens invisíveis e entregue evidências aos seus investigadores.</p><div className="auth-card"><h2>{register?'Configurar acesso do mestre':'Entrar como mestre01'}</h2><p className="auth-note">Apenas o mestre utiliza e-mail e senha. Jogadores entram pelo link privado enviado pelo mestre.</p><form onSubmit={login}><label>E-mail<input type="email" name="email" required placeholder="investigador@exemplo.com"/></label><label>Senha<input type="password" name="password" required minLength="6" placeholder="Sua senha"/></label><button disabled={working} className="primary full">{register?'Configurar meu acesso':'Entrar como mestre'} →</button></form><button className="text-button" onClick={()=>setRegister(v=>!v)}>{register?'Já configurei meu acesso':'Primeiro acesso do mestre? Configurar'}</button></div></div> :
+      {!session ? <div className="auth-screen"><div className="eyebrow">ACESSO EXCLUSIVO DO MESTRE · mestre01</div><h1>Todo mistério começa<br/><em>com um documento.</em></h1><p>Controle a campanha, crie pistas e envie links individuais aos jogadores. Eles não precisam fazer login.</p>
+        <div className="auth-card"><h2>Entrar como mestre01</h2><p className="auth-note">Sua conta de mestre é identificada como <strong>mestre01</strong>. Apenas você precisa de senha.</p>
+          <form onSubmit={login}>
+            <label>Usuário<input name="username" value="mestre01" readOnly autoComplete="username"/></label>
+            <label>Senha do mestre<input type="password" name="password" required autoComplete="current-password" placeholder="Sua senha privada"/></label>
+            <button type="submit" disabled={working} className="primary full">{working?'Entrando...':'Entrar no painel do mestre'} →</button>
+          </form>
+          <p className="auth-setup-hint">Primeiro acesso? Use o link privado de ativação do mestre. Os jogadores entram somente pelos links que você gerar.</p>
+        </div></div> :
       screen==='home' ? <section className="page"><div className="eyebrow">SEU UNIVERSO DE INVESTIGAÇÃO</div><div className="page-heading"><div><h1>Suas campanhas<span className="period">.</span></h1><p>Organize suas histórias, pistas e jogadores em um só lugar.</p></div></div>
         <div className="home-grid"><div className="panel"><span className="eyebrow">01 / CRIAR HISTÓRIA</span><h2>Nova campanha</h2><p>Assuma o papel de mestre de uma investigação.</p><form onSubmit={createCampaign}><label>Nome<input required maxLength="120" placeholder="Ex.: O legado de Blackwood" value={campaignName} onChange={e=>setCampaignName(e.target.value)}/></label><label>Jogadores<select value={maxPlayers} onChange={e=>setMaxPlayers(e.target.value)}>{Array.from({length:12},(_,i)=><option key={i} value={i+1}>{i+1}</option>)}</select></label><button className="primary full" disabled={working}>Criar campanha →</button></form></div>
         <div className="panel"><span className="eyebrow">02 / CONVIDAR INVESTIGADORES</span><h2>Links individuais</h2><p>Os jogadores não precisam criar conta nem digitar senha. Abra uma campanha, defina o nome de cada jogador e copie o link exclusivo dele.</p><div className="invitation-summary">✦ Cada link mostra apenas o inventário daquele jogador.</div></div></div>
