@@ -99,7 +99,7 @@ export default function App() {
   const isMaster = !!campaign && campaign.owner_id === session?.user?.id;
   const players = playerSeats.filter(p => p.enabled);
   const selectedLayer = (pages?.[side] || []).find(l => l.id === selected);
-  const filteredTemplates=templates.filter(t=>(templateCategory==='Todos'||t.type===templateCategory) && [t.name,t.type,t.description].join(' ').toLocaleLowerCase('pt-BR').includes(templateQuery.trim().toLocaleLowerCase('pt-BR')));
+  const filteredTemplates=templates.filter(t=>(templateCategory==='Todos'||t.type===templateCategory) && [t.name,t.type,t.description].join(' ').toLocaleLowerCase('pt-BR').includes(templateQuery.trim().toLocaleLowerCase('pt-BR'))).sort((a,b)=>Number(!!b.premiumArtwork)-Number(!!a.premiumArtwork));
 
   useEffect(() => {
     const onHashChange=()=>{setPlayerToken(readPlayerToken());setSetupToken(readMasterSetupToken());};
@@ -305,8 +305,9 @@ export default function App() {
           <div className="templates">{filteredTemplates.map(t=><button key={t.id} className="template-preview" onClick={()=>startEditor(null,t)} title={t.description}>
             <span className={'preview-document sheet-'+t.paper}>
               <HandoutArt templateId={t.id} preview />
-              <span className="preview-composed-ink">{t.layers.filter(l=>l.kind!=='uv').slice(0,4).map((layer,i)=><span className={'preview-text layer-'+(layer.style||'body')} key={i} style={{left:layer.x+'%',top:layer.y+'%',width:layer.width+'%',fontSize:Math.max(6,Math.min(12,layer.fontSize*.34))+'px'}}>{layer.text.slice(0,95)}</span>)}</span>
-              <span className="preview-corner">ARTES ORIGINAIS • PARADOCX</span>
+              <span className="preview-composed-ink">{(!t.premiumArtwork || t.id==='news')&&t.layers.filter(l=>l.kind!=='uv').slice(0,4).map((layer,i)=><span className={'preview-text layer-'+(layer.style||'body')} key={i} style={{left:layer.x+'%',top:layer.y+'%',width:layer.width+'%',fontSize:Math.max(6,Math.min(12,layer.fontSize*.34))+'px'}}>{layer.text.slice(0,95)}</span>)}</span>
+              <span className="preview-corner">ARTE ORIGINAL • PARADOCX</span>
+              {t.premiumArtwork&&<span className="premium-indicator">✦ ARTE EXCLUSIVA</span>}
             </span>
             <span className="template-card-info"><strong>{t.name}</strong><small>{t.type}</small></span>
           </button>)}</div>
