@@ -1,6 +1,7 @@
 
 import React, {useEffect,useState} from 'react';
 import {templates} from './data/templates';
+import HandoutArt from './HandoutArt.jsx';
 
 function PlayerSheet({document,side}) {
   const [uv,setUV]=useState(false);
@@ -15,7 +16,7 @@ function PlayerSheet({document,side}) {
   return <div className="document-frame">
     <div className="sheet-toolbar"><span>DOCUMENTO / {side==='front'?'FRENTE':'VERSO'}</span><button className={'uv-toggle '+(uv?'illuminated':'')} onClick={()=>setUV(v=>!v)}>{uv?'☼ Apagar luz negra':'☼ Ligar luz negra'}</button></div>
     <div className={'document-sheet sheet-'+layout.paper} onPointerMove={e=>{const b=e.currentTarget.getBoundingClientRect();setPoint({x:(e.clientX-b.left)/b.width*100,y:(e.clientY-b.top)/b.height*100})}} onPointerDown={e=>{const b=e.currentTarget.getBoundingClientRect();setPoint({x:(e.clientX-b.left)/b.width*100,y:(e.clientY-b.top)/b.height*100})}} onPointerLeave={()=>setPoint({x:-100,y:-100})}>
-      <div className="paper-grain"/><div className="sheet-ornament">ARQUIVO DE EVIDÊNCIAS • PARADOCX</div>
+      <div className="paper-grain"/><HandoutArt templateId={document.template} side={side}/>
       {layers.filter(l=>l.kind!=='uv').map(draw)}
       <div className="uv-content" style={{WebkitMaskImage:mask,maskImage:mask}}>{layers.filter(l=>l.kind==='uv').map(draw)}</div>
       {uv&&<div className="torch" style={{left:point.x+'%',top:point.y+'%'}}/>}
