@@ -1633,15 +1633,6 @@ export const templates = [
     "description": "Montagem de fotografia com legenda manuscrita.",
     "layers": [
       {
-        "text": "",
-        "x": 20,
-        "y": 77,
-        "width": 63,
-        "fontSize": 16,
-        "style": "symbol",
-        "kind": "normal"
-      },
-      {
         "text": "Mansão Blackwood, fachada norte",
         "x": 13,
         "y": 87,
