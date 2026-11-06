@@ -1,4 +1,16 @@
 import React, {useId} from 'react';
+import letterIllustration from './art/letter.js';
+import dossierIllustration from './art/dossier.js';
+import occultIllustration from './art/occult.js';
+import labIllustration from './art/lab.js';
+import blueprintIllustration from './art/blueprint.js';
+import newspaperPhotograph from './art/newspaper_photo.js';
+
+const premiumIllustrations = {
+  letter:letterIllustration,report:dossierIllustration,dossier:dossierIllustration,
+  occult:occultIllustration,lab:labIllustration,research:labIllustration,
+  blueprint:blueprintIllustration
+};
 
 /** Original vector printing plates for ParaDocx handouts.
  * Decorative artwork only. All campaign-specific writing stays in the editable text layers.
@@ -55,6 +67,14 @@ export default function HandoutArt({templateId='letter',side='front',preview=fal
   const ink=sc.ink, accent=sc.accent;
   const p=paperColors[kind]||'#e7d7b6';
   const isBlank=templateId==='blank';
+  // These assets are part of ParaDocx itself, not external image links or replacement previews.
+  // Text, UV messages and both sides are still independent editable document layers.
+  if (front && premiumIllustrations[templateId]) {
+    return <svg className={'handout-art handout-premium '+(preview?'handout-art-preview':'')}
+      viewBox="0 0 800 1132" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <image href={premiumIllustrations[templateId]} width="800" height="1132" preserveAspectRatio="none"/>
+    </svg>;
+  }
   return <svg className={'handout-art handout-'+kind+' '+(preview?'handout-art-preview':'')} viewBox="0 0 800 1132" preserveAspectRatio="none" aria-hidden="true" focusable="false">
     <defs>
       <linearGradient id={uid+'paper'} x1="0" x2="1" y1="0" y2="1"><stop stopColor="#fff5db" offset="0"/><stop stopColor={p} offset=".48"/><stop stopColor="#b9a07f" offset="1"/></linearGradient>
@@ -88,7 +108,8 @@ export default function HandoutArt({templateId='letter',side='front',preview=fal
     {front && kind==='news' && <g>
       <MoonPhases y={67} color={ink}/>{rule(55,203,692,ink,.7)}{rule(55,216,692,ink,.6)}{rule(55,320,692,ink,.55)}
       <Raven x={94} y={133} scale={.54} color={ink}/><EngravedBuilding x={701} y={139} scale={.37} color={ink}/>
-      <ClipPhoto x={202} y={480} w={343} h={247} color={ink}/><EngravedBuilding x={382} y={578} scale={.45} color={ink}/>
+      <ClipPhoto x={202} y={480} w={343} h={247} color={ink}/>
+      <image href={newspaperPhotograph} x="211" y="489" width="325" height="229" preserveAspectRatio="xMidYMid slice" opacity=".78"/>
       <G opacity={.65}><rect x="55" y="393" width="125" height="532" fill="none" stroke={ink} strokeWidth="2"/><rect x="571" y="393" width="174" height="535" fill="none" stroke={ink} strokeWidth="2"/><LineField x={591} y={472} w={130} rows={10} color={ink}/><LineField x={69} y={479} w={97} rows={11} color={ink}/></G>
       <Stain x={644} y={920} r={89}/>{rule(56,965,689,ink,.58)}<Flourish x={400} y={1035} color={ink}/>
     </g>}
