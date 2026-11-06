@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase as db } from './lib/supabase';
-import { templates, newPages } from './data/templates';
+import { templates, newPages, templateCategories } from './data/templates';
 import PlayerPortal from './PlayerPortal.jsx';
 import MasterSetup from './MasterSetup.jsx';
 import {masterAuth} from './lib/masterAuth.js';
@@ -42,8 +42,8 @@ function Sheet({ pages, side, paper, editable, selected, onSelect, onDrag }) {
   const uvMask = uv ? 'radial-gradient(circle 110px at ' + point.x + '% ' + point.y + '%, black 12%, transparent 100%)' : 'linear-gradient(transparent,transparent)';
   const renderLayer = layer => <div
     key={layer.id}
-    className={'document-layer ' + (layer.kind === 'uv' ? 'secret-text ' : '') + (editable && selected === layer.id ? 'is-selected' : '')}
-    style={{ left: layer.x + '%', top: layer.y + '%', width: layer.width + '%', fontSize: layer.fontSize + 'px' }}
+    className={'document-layer layer-' + (layer.style || 'body').replace(/[^a-z]/g,'') + ' ' + (layer.kind === 'uv' ? 'secret-text ' : '') + (editable && selected === layer.id ? 'is-selected' : '')}
+    style={{ left: layer.x + '%', top: layer.y + '%', width: (layer.width || 74) + '%', fontSize: 'clamp(10px, ' + (Number(layer.fontSize || 18)/5).toFixed(2) + 'vw, ' + Number(layer.fontSize || 18) + 'px)' }}
     onPointerDown={editable ? e => down(e, layer) : undefined}
   >{layer.text}</div>;
   return <div className="document-frame">
@@ -52,7 +52,7 @@ function Sheet({ pages, side, paper, editable, selected, onSelect, onDrag }) {
       {!editable && <button className={'uv-toggle ' + (uv ? 'illuminated' : '')} onClick={() => setUV(v => !v)}>{uv ? '☼ Desligar UV' : '☼ Luz negra'}</button>}
       {editable && <span className="editor-indicator">CAMADAS SECRETAS VISÍVEIS NO EDITOR</span>}
     </div>
-    <div className={'document-sheet sheet-' + paper} ref={sheet} onPointerMove={move} onPointerUp={() => dragging.current = null} onPointerCancel={() => dragging.current = null} onPointerLeave={() => { if (!editable) setPoint({x: -100,y:-100}); }}>
+    <div className={'document-sheet sheet-' + paper} ref={sheet} onPointerMove={move} onPointerDown={!editable ? move : undefined} onPointerUp={() => dragging.current = null} onPointerCancel={() => dragging.current = null} onPointerLeave={() => { if (!editable) setPoint({x: -100,y:-100}); }}>
       <div className="paper-grain" />
       <div className="sheet-ornament">ARQUIVO DE EVIDÊNCIAS • PARADOCX</div>
       {list.filter(l => l.kind !== 'uv').map(renderLayer)}
@@ -92,10 +92,13 @@ export default function App() {
   const [pages, setPages] = useState({front:[],back:[]});
   const [side, setSide] = useState('front');
   const [mode, setMode] = useState('quick');
+  const [templateQuery,setTemplateQuery]=useState('');
+  const [templateCategory,setTemplateCategory]=useState('Todos');
   const [selected, setSelected] = useState(null);
   const isMaster = !!campaign && campaign.owner_id === session?.user?.id;
   const players = playerSeats.filter(p => p.enabled);
   const selectedLayer = (pages?.[side] || []).find(l => l.id === selected);
+  const filteredTemplates=templates.filter(t=>(templateCategory==='Todos'||t.type===templateCategory) && [t.name,t.type,t.description].join(' ').toLocaleLowerCase('pt-BR').includes(templateQuery.trim().toLocaleLowerCase('pt-BR')));
 
   useEffect(() => {
     const onHashChange=()=>{setPlayerToken(readPlayerToken());setSetupToken(readMasterSetupToken());};
@@ -200,23 +203,24 @@ export default function App() {
     if(error)return setNotice(error.message);
     setCampaign(data);await loadCampaigns();setNotice('Limite de jogadores atualizado.');
   }
-  function startEditor(item, preset) {
-    const p = preset || getTemplate(item?.template);
-    setDocument(item || null);
+  function startEditor(item, preset, copyOf = null) {
+    const source = copyOf || item;
+    const p = preset || getTemplate(source?.template);
+    setDocument(copyOf ? null : (item || null));
     setTemplate(p.id);
-    setTitle(item?.title || p.name);
-    setPages(item ? JSON.parse(JSON.stringify(item.pages)) : newPages(p));
+    setTitle(copyOf ? copyOf.title + ' (cópia)' : (item?.title || p.name));
+    setPages(source ? JSON.parse(JSON.stringify(source.pages || {front:[],back:[]})) : newPages(p));
     setSide('front');setMode('quick');setSelected(null);setScreen('editor');
   }
   function openViewer(item) {
     setDocument(item);setTitle(item.title);setTemplate(item.template);
-    setPages(item.pages);setSide('front');setScreen('viewer');
+    setPages(item.pages || {front:[],back:[]});setSide('front');setScreen('viewer');
   }
   function updateLayer(layerId, field) {
     setPages(prev => ({...prev,[side]:(prev[side] || []).map(l=>l.id===layerId?{...l,...field}:l)}));
   }
   function addLayer(kind) {
-    const l = {id:id(),kind,text:kind==='uv'?'Mensagem invisível':'Novo texto',x:14,y:25,width:74,fontSize:20};
+    const l = {id:id(),kind,style:kind==='uv'?'secret':'body',text:kind==='uv'?'Mensagem invisível':'Novo texto',x:14,y:25,width:74,fontSize:20};
     setPages(p=>({...p,[side]:[...(p[side]||[]),l]}));setSelected(l.id);setMode('advanced');
   }
   function deleteLayer() {
@@ -224,11 +228,12 @@ export default function App() {
   }
   function chooseTemplate(key) {
     const p = getTemplate(key);
-    if ((pages.front.length || pages.back.length) && !window.confirm('Trocar o modelo vai substituir os textos atuais. Continuar?')) return;
-    setTemplate(key);setPages(newPages(p));setSelected(null);
+    if (((pages.front||[]).length || (pages.back||[]).length) && !window.confirm('Trocar o modelo vai substituir os textos atuais. Continuar?')) return;
+    setTemplate(key);setPages(newPages(p));setSelected(null);setMode('quick');
   }
   async function saveDocument() {
     if(!title.trim())return setNotice('Informe um título.');
+    if(!Array.isArray(pages.front)||!Array.isArray(pages.back))return setNotice('As páginas estão inválidas.');
     setWorking(true);
     const body = {title:title.trim(),template,pages};
     const result = document ? await db.from('documents').update(body).eq('id',document.id).select().single() :
@@ -279,7 +284,7 @@ export default function App() {
         <div className="panel"><span className="eyebrow">02 / CONVIDAR INVESTIGADORES</span><h2>Links individuais</h2><p>Os jogadores não precisam criar conta nem digitar senha. Abra uma campanha, defina o nome de cada jogador e copie o link exclusivo dele.</p><div className="invitation-summary">✦ Cada link mostra apenas o inventário daquele jogador.</div></div></div>
         <div className="section-heading"><h2>Campanhas disponíveis</h2><small>{campaigns.length} ARQUIVOS</small></div><div className="campaign-grid">{campaigns.map(c=><button key={c.id} className="campaign-card" onClick={()=>{setCampaign(c);setScreen('campaign')}}><span className="case-symbol">✧</span><small>{c.owner_id===session.user.id?'MESTRE':'INVESTIGADOR'}</small><h3>{c.name}</h3><span className="card-footer">ABRIR ARQUIVO ↗</span></button>)}{campaigns.length===0&&<div className="empty">Você ainda não participa de nenhuma campanha.</div>}</div>
       </section> :
-      screen==='campaign' ? <section className="page"><div className="eyebrow">ARQUIVO DE CAMPANHA / {isMaster?'CONTROLE DO MESTRE':'INVESTIGAÇÃO'}</div><div className="page-heading"><div><h1>{campaign.name}<span className="period">.</span></h1><p>{isMaster?'Organize e distribua suas pistas.':'Investigue os documentos recebidos do mestre.'}</p></div>{isMaster&&<button className="primary" onClick={()=>startEditor(null,templates[0])}>+ Criar documento</button>}</div>
+      screen==='campaign' ? <section className="page"><div className="eyebrow">ARQUIVO DE CAMPANHA / {isMaster?'CONTROLE DO MESTRE':'INVESTIGAÇÃO'}</div><div className="page-heading"><div><h1>{campaign.name}<span className="period">.</span></h1><p>{isMaster?'Organize e distribua suas pistas.':'Investigue os documentos recebidos do mestre.'}</p></div>{isMaster&&<div className="campaign-actions"><button className="outline" onClick={()=>window.document.getElementById('modelos')?.scrollIntoView({behavior:'smooth'})}>Explorar {templates.length} modelos ↓</button><button className="primary" onClick={()=>startEditor(null,templates[0])}>+ Criar documento</button></div>}</div>
         <div className="stats"><div><small>DOCUMENTOS VISÍVEIS</small><strong>{documents.length}</strong></div><div><small>INVESTIGADORES</small><strong>{players.length}/{campaign.max_players}</strong></div><div><small>ACESSO</small><strong>{isMaster?'Mestre':'Jogador'}</strong></div></div>
         {isMaster&&<section className="master-players">
           <div className="section-heading"><h2>Jogadores e acessos individuais</h2><small>{players.length}/{campaign.max_players} JOGADORES</small></div>
@@ -288,12 +293,29 @@ export default function App() {
           <div className="limit-control"><label>Máximo de jogadores<input type="number" min={Math.max(1,players.length)} max="30" value={limitDraft} onChange={e=>setLimitDraft(e.target.value)}/></label><button className="outline" onClick={changePlayerLimit}>Salvar limite</button></div></div>
           <div className="seat-list">{players.map(p=><div className="seat-row" key={p.id}><span className="profile-icon">{p.display_name[0]?.toUpperCase()}</span><div className="seat-detail"><strong>{p.display_name}</strong><small>{documents.filter(d=>d.holder_seat_id===p.id&&d.is_published).length} documento(s) no inventário</small></div><div className="seat-actions">{playerLinks[p.id]&&<button className="primary compact" onClick={()=>copyLink(playerLinks[p.id])}>Copiar link individual</button>}<button className="outline compact" disabled={working} onClick={()=>rotateSeat(p)}>{playerLinks[p.id]?'Trocar link':'Gerar novo link'}</button><button className="danger" onClick={()=>deactivateSeat(p)} disabled={working}>Desativar</button></div></div>)}{players.length===0&&<div className="empty">Nenhum jogador cadastrado. Crie a primeira vaga usando o nome dele acima.</div>}</div>
         </section>}
-        {isMaster&&<><div className="section-heading"><h2>Biblioteca de modelos</h2><small>ESCOLHA O PONTO DE PARTIDA</small></div><div className="templates">{templates.map(t=><button key={t.id} className={'template-preview '+t.paper} onClick={()=>startEditor(null,t)}><span>{t.icon}</span><strong>{t.name}</strong><small>{t.type}</small></button>)}</div></>}
+        {isMaster&&<section className="handout-library" id="modelos">
+          <div className="section-heading"><h2>Biblioteca de modelos</h2><small>{templates.length} MODELOS ORIGINAIS</small></div>
+          <p className="library-intro">Escolha um documento e personalize o texto, o verso e as mensagens invisíveis no Estúdio.</p>
+          <div className="library-controls">
+            <label>Buscar modelo<input type="search" placeholder="Ex.: carta, jornal, mapa, médico..." value={templateQuery} onChange={e=>setTemplateQuery(e.target.value)}/></label>
+            <label>Categoria<select value={templateCategory} onChange={e=>setTemplateCategory(e.target.value)}>{templateCategories.map(c=><option key={c} value={c}>{c}</option>)}</select></label>
+          </div>
+          <div className="library-results">{filteredTemplates.length} de {templates.length} modelos disponíveis</div>
+          <div className="templates">{filteredTemplates.map(t=><button key={t.id} className="template-preview" onClick={()=>startEditor(null,t)} title={t.description}>
+            <span className={'preview-document sheet-'+t.paper}>
+              <span className="preview-icon">{t.icon}</span>
+              <span className="preview-ink">{t.layers.slice(0,2).map((layer,i)=><span key={i}>{layer.text.split('\n')[0].slice(0,54)}</span>)}</span>
+              <span className="preview-stamp">PARADOCX • ARQUIVO</span>
+            </span>
+            <span className="template-card-info"><strong>{t.name}</strong><small>{t.type}</small></span>
+          </button>)}</div>
+          {filteredTemplates.length===0&&<div className="empty">Nenhum modelo encontrado. Experimente outra busca ou categoria.</div>}
+        </section>}
         <div className="section-heading"><h2>Documentos da campanha</h2><small>{documents.length} ITENS</small></div>
         <div className="doc-list">{documents.map(d=><div className="doc-row" key={d.id}>
           <div className="doc-sign">▤</div>
           <div className="doc-detail"><strong>{d.title}</strong><small>{getTemplate(d.template).name} • {d.is_published&&d.holder_seat_id?'Com '+(players.find(p=>p.id===d.holder_seat_id)?.display_name||'jogador'):'No arquivo do mestre'}</small></div>
-          <div className="doc-controls"><button className="outline compact" onClick={()=>openViewer(d)}>Examinar</button><button className="outline compact" onClick={()=>startEditor(d)}>Editar</button>
+          <div className="doc-controls"><button className="outline compact" onClick={()=>openViewer(d)}>Examinar</button><button className="outline compact" onClick={()=>startEditor(d)}>Editar</button><button className="outline compact" onClick={()=>startEditor(null,null,d)}>Duplicar</button>
             <select className="compact-select" value={d.holder_seat_id||''} onChange={e=>assignDocument(d,e.target.value)}><option value="">Recolher documento</option>{players.map(p=><option key={p.id} value={p.id}>Entregar a {p.display_name}</option>)}</select>
             <button className="danger" aria-label="Excluir documento" onClick={()=>deleteDocument(d)}>×</button>
           </div></div>)}{documents.length===0&&<div className="empty">Escolha um modelo e crie seu primeiro documento.</div>}</div>
@@ -301,10 +323,13 @@ export default function App() {
       screen==='mechanics' ? <section className="mechanics"><span className="eyebrow">MÓDULO EXPERIMENTAL</span><div className="mystery-icon">✧</div><h1>A próxima peça<br/><em>do mistério.</em></h1><p>Espaço reservado para enigmas e mecanismos interativos que criaremos juntos.</p><div className="coming">◈ MÓDULO INATIVO</div><button className="outline" onClick={()=>setScreen('campaign')}>← Voltar aos documentos</button></section> :
       ['editor','viewer'].includes(screen) ? <section className="workspace"><div className="workspace-heading"><button className="back-link" onClick={()=>setScreen('campaign')}>← Arquivo</button><div><span className="eyebrow">{screen==='editor'?'ESTÚDIO DE DOCUMENTOS':'LEITOR DE EVIDÊNCIAS'}</span><h2>{title}</h2></div>{screen==='editor'&&<button className="primary" onClick={saveDocument} disabled={working}>{working?'Salvando...':'Salvar documento ↗'}</button>}</div>
         <div className={'workspace-grid '+(screen==='viewer'?'view-only':'')}>
-          {screen==='editor'&&<aside className="editor-panel"><div className="editor-title">EDITOR HÍBRIDO <span>✧</span></div><label>Título<input maxLength="150" value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Modelo<select value={template} onChange={e=>chooseTemplate(e.target.value)}>{templates.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
+          {screen==='editor'&&<aside className="editor-panel"><div className="editor-title">ESTÚDIO DE DOCUMENTOS <span>✧</span></div><div className="editor-template-info">{getTemplate(template).icon} {getTemplate(template).description}</div><label>Título<input maxLength="150" value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Modelo<select value={template} onChange={e=>chooseTemplate(e.target.value)}>{templates.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
             <div className="mode-switch"><button className={mode==='quick'?'active':''} onClick={()=>setMode('quick')}>Campos rápidos</button><button className={mode==='advanced'?'active':''} onClick={()=>setMode('advanced')}>Camadas livres</button></div>
-            {mode==='quick'?<div className="field-list">{(pages[side]||[]).map((l,i)=><label key={l.id}>{l.kind==='uv'?'✧ Mensagem secreta':'Texto '+(i+1)}<textarea rows="3" value={l.text} onChange={e=>updateLayer(l.id,{text:e.target.value})}/></label>)}<button className="outline" onClick={()=>addLayer('normal')}>+ Adicionar texto</button><button className="outline" onClick={()=>addLayer('uv')}>+ Adicionar segredo UV</button></div>:<><div className="layer-actions"><button onClick={()=>addLayer('normal')}>+ Texto</button><button onClick={()=>addLayer('uv')}>+ Luz negra</button></div><div className="layer-list">{(pages[side]||[]).map(l=><button className={selected===l.id?'selected':''} key={l.id} onClick={()=>setSelected(l.id)}>{l.kind==='uv'?'✧':'☰'} {l.text.slice(0,27)||'Texto vazio'}</button>)}</div>{selectedLayer&&<div className="layer-properties"><strong>Configurar camada</strong><textarea rows="4" value={selectedLayer.text} onChange={e=>updateLayer(selected,{text:e.target.value})}/><label>Tamanho da fonte: {selectedLayer.fontSize}<input type="range" min="10" max="44" value={selectedLayer.fontSize} onChange={e=>updateLayer(selected,{fontSize:Number(e.target.value)})}/></label><label>Largura: {selectedLayer.width}%<input type="range" min="20" max="95" value={selectedLayer.width} onChange={e=>updateLayer(selected,{width:Number(e.target.value)})}/></label><button className="danger" onClick={deleteLayer}>Excluir camada ×</button></div>}</>}
-            <p className="editor-hint">Modo rápido para preencher. Modo livre para mover textos, redimensionar e inserir segredos.</p>
+            {mode==='quick'?<div className="field-list">{(pages[side]||[]).map((l,i)=><label key={l.id}>{l.kind==='uv'?'✧ Mensagem secreta':'Texto '+(i+1)}<textarea rows="3" value={l.text} onChange={e=>updateLayer(l.id,{text:e.target.value})}/></label>)}<button className="outline" onClick={()=>addLayer('normal')}>+ Adicionar texto</button><button className="outline" onClick={()=>addLayer('uv')}>+ Adicionar segredo UV</button></div>:<><div className="layer-actions"><button onClick={()=>addLayer('normal')}>+ Texto</button><button onClick={()=>addLayer('uv')}>+ Luz negra</button></div><div className="layer-list">{(pages[side]||[]).map(l=><button className={selected===l.id?'selected':''} key={l.id} onClick={()=>setSelected(l.id)}>{l.kind==='uv'?'✧':'☰'} {l.text.slice(0,27)||'Texto vazio'}</button>)}</div>{selectedLayer&&<div className="layer-properties"><strong>Configurar camada</strong><textarea rows="4" value={selectedLayer.text} onChange={e=>updateLayer(selected,{text:e.target.value})}/><label>Tamanho da fonte: {selectedLayer.fontSize}<input type="range" min="10" max="44" value={selectedLayer.fontSize} onChange={e=>updateLayer(selected,{fontSize:Number(e.target.value)})}/></label><label>Largura: {selectedLayer.width}%<input type="range" min="20" max="95" value={selectedLayer.width} onChange={e=>updateLayer(selected,{width:Number(e.target.value)})}/></label>
+                <div className="position-row"><label>Horizontal (%)<input type="number" min="0" max="94" value={Math.round(selectedLayer.x)} onChange={e=>updateLayer(selected,{x:Math.max(0,Math.min(94,Number(e.target.value)||0))})}/></label><label>Vertical (%)<input type="number" min="0" max="94" value={Math.round(selectedLayer.y)} onChange={e=>updateLayer(selected,{y:Math.max(0,Math.min(94,Number(e.target.value)||0))})}/></label></div>
+                <label>Estilo<select value={selectedLayer.style||'body'} onChange={e=>updateLayer(selected,{style:e.target.value})}>{[['body','Texto comum'],['script','Manuscrito'],['heading','Cabeçalho'],['headline','Manchete'],['mono','Máquina de escrever'],['stamp','Carimbo'],['symbol','Símbolos'],['smallcaps','Letras pequenas']].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+                <button className="danger" onClick={deleteLayer}>Excluir camada ×</button></div>}</>}
+            <p className="editor-hint">Modo rápido para preencher. Modo livre para arrastar, posicionar, mudar estilos e criar textos UV. Você pode alternar entre frente e verso acima da folha.</p>
           </aside>}
           <div className="editor-stage"><div className="page-switch"><button className={side==='front'?'chosen':''} onClick={()=>{setSide('front');setSelected(null)}}>Frente</button><button className={side==='back'?'chosen':''} onClick={()=>{setSide('back');setSelected(null)}}>Verso</button></div>
             <Sheet key={screen+side+document?.id} pages={pages} side={side} paper={getTemplate(template).paper} editable={screen==='editor'} selected={selected} onSelect={setSelected} onDrag={(layerId,x,y)=>updateLayer(layerId,{x,y})}/>

@@ -8,10 +8,13 @@ function PlayerSheet({document,side}) {
   const layout=templates.find(t=>t.id===document.template)||templates[0];
   const layers=Array.isArray(document.pages?.[side])?document.pages[side]:[];
   const mask=uv?'radial-gradient(circle 110px at '+point.x+'% '+point.y+'%, black 12%,transparent 100%)':'linear-gradient(transparent,transparent)';
-  const draw=l=><div key={l.id} className={'document-layer '+(l.kind==='uv'?'secret-text':'')} style={{left:l.x+'%',top:l.y+'%',width:(l.width||70)+'%',fontSize:(l.fontSize||18)+'px'}}>{l.text}</div>;
+  const draw=l=><div key={l.id}
+    className={'document-layer layer-'+(l.style||'body').replace(/[^a-z]/g,'')+' '+(l.kind==='uv'?'secret-text':'')}
+    style={{left:l.x+'%',top:l.y+'%',width:(l.width||70)+'%',fontSize:'clamp(10px, '+(Number(l.fontSize||18)/5).toFixed(2)+'vw, '+Number(l.fontSize||18)+'px)'}}>
+    {l.text}</div>;
   return <div className="document-frame">
     <div className="sheet-toolbar"><span>DOCUMENTO / {side==='front'?'FRENTE':'VERSO'}</span><button className={'uv-toggle '+(uv?'illuminated':'')} onClick={()=>setUV(v=>!v)}>{uv?'☼ Apagar luz negra':'☼ Ligar luz negra'}</button></div>
-    <div className={'document-sheet sheet-'+layout.paper} onPointerMove={e=>{const b=e.currentTarget.getBoundingClientRect();setPoint({x:(e.clientX-b.left)/b.width*100,y:(e.clientY-b.top)/b.height*100})}} onPointerLeave={()=>setPoint({x:-100,y:-100})}>
+    <div className={'document-sheet sheet-'+layout.paper} onPointerMove={e=>{const b=e.currentTarget.getBoundingClientRect();setPoint({x:(e.clientX-b.left)/b.width*100,y:(e.clientY-b.top)/b.height*100})}} onPointerDown={e=>{const b=e.currentTarget.getBoundingClientRect();setPoint({x:(e.clientX-b.left)/b.width*100,y:(e.clientY-b.top)/b.height*100})}} onPointerLeave={()=>setPoint({x:-100,y:-100})}>
       <div className="paper-grain"/><div className="sheet-ornament">ARQUIVO DE EVIDÊNCIAS • PARADOCX</div>
       {layers.filter(l=>l.kind!=='uv').map(draw)}
       <div className="uv-content" style={{WebkitMaskImage:mask,maskImage:mask}}>{layers.filter(l=>l.kind==='uv').map(draw)}</div>
@@ -43,8 +46,10 @@ export default function PlayerPortal({token}){
       } catch(e){if(alive){setError(e.message);setState(null);}}
     }
     setSelected(null);setState(null);setError('');reload();
-    const interval=setInterval(reload,8000);
-    return ()=>{alive=false;clearInterval(interval)};
+    const onVisibility=()=>{if(!window.document.hidden)reload();};
+    window.document.addEventListener('visibilitychange',onVisibility);
+    const interval=setInterval(()=>{if(!window.document.hidden)reload();},12000);
+    return ()=>{alive=false;clearInterval(interval);window.document.removeEventListener('visibilitychange',onVisibility)};
   },[token]);
   async function transfer(d){
     if(!target)return setNotice('Escolha o investigador que receberá o documento.');
@@ -60,7 +65,7 @@ export default function PlayerPortal({token}){
   return <div className="player-portal">
     <header className="player-topbar"><div className="player-brand"><span className="brand-emblem">P<sup>✦</sup></span><div><strong>ParaDocx</strong><small>Arquivo do investigador</small></div></div><span className="top-label">◉ ACESSO INDIVIDUAL</span></header>
     <main className="player-main">
-      {error ? <div className="player-message"><h1>Acesso não autorizado.</h1><p>{error}</p><p>Peça ao mestre para gerar um novo link exclusivo.</p></div> :
+      {error ? <div className="player-message"><h1>Não foi possível abrir o arquivo.</h1><p>{error}</p><p>Se seu link foi revogado, peça ao mestre um novo acesso. Se for uma falha de conexão, tente novamente.</p><button className="outline" onClick={()=>window.location.reload()}>Tentar novamente</button></div> :
       !state ? <div className="splash">✦ Abrindo seu arquivo de investigação...</div> :
       <>
         <div className="eyebrow">CAMPANHA / {state.campaign.name.toUpperCase()}</div>
