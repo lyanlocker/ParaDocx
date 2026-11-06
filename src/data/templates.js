@@ -2,7 +2,7 @@
 export const templates = [
   {
     "id": "letter",
-    "name": "Carta antiga",
+    "name": "Carta do Crepúsculo",
     "type": "Correspondência",
     "icon": "✉",
     "paper": "letter",
@@ -10,37 +10,37 @@ export const templates = [
     "layers": [
       {
         "text": "Arkham, 17 de outubro de 1928",
-        "x": 11,
-        "y": 12,
-        "width": 78,
+        "x": 12,
+        "y": 28,
+        "width": 66,
         "fontSize": 15,
         "style": "date",
         "kind": "normal"
       },
       {
-        "text": "Prezado investigador,",
+        "text": "Meu estimado investigador,",
         "x": 12,
-        "y": 23,
-        "width": 77,
-        "fontSize": 25,
+        "y": 36,
+        "width": 78,
+        "fontSize": 22,
         "style": "script",
         "kind": "normal"
       },
       {
         "text": "Encontrei algo perturbador nos arquivos da família Blackwood. Preciso que venha antes do anoitecer. Não confie nos registros oficiais.",
         "x": 12,
-        "y": 39,
-        "width": 75,
+        "y": 45,
+        "width": 76,
         "fontSize": 19,
-        "style": "body",
+        "style": "script",
         "kind": "normal"
       },
       {
-        "text": "Com apreço,\nA. Moretti",
-        "x": 12,
-        "y": 76,
-        "width": 72,
-        "fontSize": 21,
+        "text": "A. Moretti",
+        "x": 16,
+        "y": 78,
+        "width": 65,
+        "fontSize": 19,
         "style": "script",
         "kind": "normal"
       }
@@ -66,58 +66,59 @@ export const templates = [
         "style": "secret",
         "kind": "uv"
       }
-    ]
+    ],
+    "premiumArtwork": true
   },
   {
     "id": "report",
-    "name": "Relatório policial",
+    "name": "Relatório de Ocorrência • 1928",
     "type": "Investigação",
     "icon": "▤",
     "paper": "report",
     "description": "Relatório oficial com ocorrência, protocolo e assinatura.",
     "layers": [
       {
-        "text": "DEPARTAMENTO DE POLÍCIA",
-        "x": 9,
-        "y": 11,
-        "width": 82,
-        "fontSize": 22,
+        "text": "O ÚLTIMO PECADO",
+        "x": 26,
+        "y": 21,
+        "width": 67,
+        "fontSize": 16,
         "style": "heading",
         "kind": "normal"
       },
       {
-        "text": "RELATÓRIO DE OCORRÊNCIA Nº 0417",
-        "x": 9,
-        "y": 22,
-        "width": 82,
-        "fontSize": 18,
+        "text": "ARQUIVO Nº 0417",
+        "x": 23,
+        "y": 25,
+        "width": 62,
+        "fontSize": 14,
         "style": "mono",
         "kind": "normal"
       },
       {
-        "text": "Data: 13/10/1928     Local: Arkham",
-        "x": 9,
-        "y": 36,
-        "width": 82,
-        "fontSize": 15,
+        "text": "Aberto em: 13/10/1928",
+        "x": 60,
+        "y": 29,
+        "width": 32,
+        "fontSize": 12,
         "style": "label",
         "kind": "normal"
       },
       {
-        "text": "Durante a vistoria no imóvel, foram identificados ruídos, marcas de arrasto e evidências de circulação noturna não registrada.",
-        "x": 9,
-        "y": 51,
-        "width": 82,
-        "fontSize": 17,
+        "text": "Vistoria na residência Blackwood: foram identificados sinais de entrada clandestina durante a madrugada.",
+        "x": 45,
+        "y": 40,
+        "width": 43,
+        "fontSize": 13,
         "style": "body",
         "kind": "normal"
       },
       {
-        "text": "Responsável: Inspetor A. Moretti",
-        "x": 9,
-        "y": 81,
-        "width": 82,
-        "fontSize": 16,
+        "text": "Inspetor responsável: A. Moretti",
+        "x": 10,
+        "y": 74,
+        "width": 80,
+        "fontSize": 14,
         "style": "signature",
         "kind": "normal"
       }
@@ -152,11 +153,12 @@ export const templates = [
         "style": "secret",
         "kind": "uv"
       }
-    ]
+    ],
+    "premiumArtwork": true
   },
   {
     "id": "news",
-    "name": "Primeira página de jornal",
+    "name": "Gazeta de Arkham",
     "type": "Imprensa",
     "icon": "▥",
     "paper": "news",
@@ -164,37 +166,37 @@ export const templates = [
     "layers": [
       {
         "text": "THE ARKHAM TIMES",
-        "x": 6,
-        "y": 10,
-        "width": 88,
-        "fontSize": 34,
+        "x": 16,
+        "y": 9,
+        "width": 70,
+        "fontSize": 33,
         "style": "masthead",
         "kind": "normal"
       },
       {
         "text": "EDIÇÃO ESPECIAL · 18 OUT 1928 · 5 CENTAVOS",
-        "x": 7,
-        "y": 24,
-        "width": 86,
-        "fontSize": 13,
+        "x": 12,
+        "y": 20,
+        "width": 76,
+        "fontSize": 12,
         "style": "smallcaps",
         "kind": "normal"
       },
       {
         "text": "DESAPARECIMENTOS ASSOMBRAM A REGIÃO",
-        "x": 7,
-        "y": 34,
-        "width": 86,
+        "x": 9,
+        "y": 24,
+        "width": 82,
         "fontSize": 24,
         "style": "headline",
         "kind": "normal"
       },
       {
         "text": "Moradores relatam luzes inexplicáveis na antiga propriedade. Autoridades investigam relatos contraditórios.",
-        "x": 9,
-        "y": 55,
-        "width": 81,
-        "fontSize": 17,
+        "x": 8,
+        "y": 80,
+        "width": 84,
+        "fontSize": 16,
         "style": "news",
         "kind": "normal"
       }
@@ -229,40 +231,41 @@ export const templates = [
         "style": "secret",
         "kind": "uv"
       }
-    ]
+    ],
+    "premiumArtwork": true
   },
   {
     "id": "occult",
-    "name": "Página de grimório",
+    "name": "Folha do Grimório Lunar",
     "type": "Ocultismo",
     "icon": "☽",
     "paper": "occult",
     "description": "Manuscrito místico com símbolos arcanos.",
     "layers": [
       {
-        "text": "LIBER NOCTIS",
-        "x": 12,
-        "y": 12,
-        "width": 76,
-        "fontSize": 32,
+        "text": "O LIVRO DAS SOMBRAS",
+        "x": 29,
+        "y": 27,
+        "width": 47,
+        "fontSize": 19,
         "style": "ritual",
         "kind": "normal"
       },
       {
-        "text": "☽   ✧   ⟁   ☉   ✦",
-        "x": 15,
-        "y": 31,
-        "width": 72,
-        "fontSize": 28,
+        "text": "☽  ✧  ⟁  ☉",
+        "x": 31,
+        "y": 40,
+        "width": 41,
+        "fontSize": 18,
         "style": "symbol",
         "kind": "normal"
       },
       {
-        "text": "Que a passagem permaneça selada até a noite do terceiro sino. Nenhum nome deve ser pronunciado diante do espelho.",
-        "x": 14,
-        "y": 53,
-        "width": 74,
-        "fontSize": 19,
+        "text": "Quando o último sino despertar, a passagem se abrirá. Nenhum nome poderá ser pronunciado diante do espelho.",
+        "x": 29,
+        "y": 48,
+        "width": 45,
+        "fontSize": 16,
         "style": "script",
         "kind": "normal"
       }
@@ -306,7 +309,8 @@ export const templates = [
         "style": "secret",
         "kind": "uv"
       }
-    ]
+    ],
+    "premiumArtwork": true
   },
   {
     "id": "blank",
@@ -569,19 +573,19 @@ export const templates = [
       },
       {
         "text": "NOME: EDWARD BLACKWOOD",
-        "x": 9,
-        "y": 51,
-        "width": 82,
-        "fontSize": 22,
+        "x": 11,
+        "y": 70,
+        "width": 78,
+        "fontSize": 19,
         "style": "heading",
         "kind": "normal"
       },
       {
         "text": "Idade: 43 anos\nAltura: 1,78 m\nTraje: sobretudo cinza",
-        "x": 9,
-        "y": 65,
-        "width": 82,
-        "fontSize": 18,
+        "x": 11,
+        "y": 79,
+        "width": 78,
+        "fontSize": 15,
         "style": "label",
         "kind": "normal"
       }
@@ -646,19 +650,19 @@ export const templates = [
       },
       {
         "text": "SUSPEITO: HOMEM NÃO IDENTIFICADO",
-        "x": 9,
-        "y": 58,
-        "width": 82,
-        "fontSize": 21,
+        "x": 11,
+        "y": 69,
+        "width": 79,
+        "fontSize": 18,
         "style": "heading",
         "kind": "normal"
       },
       {
         "text": "Visto nas proximidades da ferrovia. Não aproxime-se sem reforços.",
-        "x": 10,
-        "y": 75,
-        "width": 80,
-        "fontSize": 17,
+        "x": 11,
+        "y": 79,
+        "width": 78,
+        "fontSize": 15,
         "style": "body",
         "kind": "normal"
       }
@@ -851,45 +855,45 @@ export const templates = [
   },
   {
     "id": "lab",
-    "name": "Resultado de laboratório",
+    "name": "Análise da Amostra 77-B",
     "type": "Pesquisa",
     "icon": "⚗",
     "paper": "research",
     "description": "Ficha de análise química com valores experimentais.",
     "layers": [
       {
-        "text": "UNIVERSIDADE DE MISKATONIC",
-        "x": 8,
-        "y": 10,
-        "width": 84,
-        "fontSize": 23,
-        "style": "heading",
+        "text": "AMOSTRA 77-B",
+        "x": 17,
+        "y": 18,
+        "width": 39,
+        "fontSize": 16,
+        "style": "mono",
         "kind": "normal"
       },
       {
-        "text": "LABORATÓRIO DE ANÁLISE · AMOSTRA 77-B",
-        "x": 8,
-        "y": 23,
-        "width": 84,
+        "text": "Registro: 18/10/1928",
+        "x": 48,
+        "y": 20,
+        "width": 43,
         "fontSize": 14,
         "style": "mono",
         "kind": "normal"
       },
       {
-        "text": "Substância: pó cinzento\nOrigem: escavação norte\nDensidade: 2,81 g/cm³",
-        "x": 10,
-        "y": 39,
-        "width": 78,
-        "fontSize": 18,
+        "text": "Material desconhecido\nOrigem: escavação norte",
+        "x": 40,
+        "y": 52,
+        "width": 36,
+        "fontSize": 13,
         "style": "mono",
         "kind": "normal"
       },
       {
-        "text": "Conclusão: composição não catalogada nas bases disponíveis.",
-        "x": 10,
-        "y": 72,
-        "width": 79,
-        "fontSize": 18,
+        "text": "Luminescência incomum após exposição a baixas temperaturas.",
+        "x": 11,
+        "y": 73,
+        "width": 55,
+        "fontSize": 14,
         "style": "body",
         "kind": "normal"
       }
@@ -924,7 +928,8 @@ export const templates = [
         "style": "secret",
         "kind": "uv"
       }
-    ]
+    ],
+    "premiumArtwork": true
   },
   {
     "id": "certificate",
@@ -1621,27 +1626,18 @@ export const templates = [
   },
   {
     "id": "photo",
-    "name": "Fotografia antiga",
+    "name": "Fotografia de Arquivo",
     "type": "Fotografia",
     "icon": "▧",
     "paper": "photo",
     "description": "Montagem de fotografia com legenda manuscrita.",
     "layers": [
       {
-        "text": "▧  1928  ▧",
-        "x": 22,
-        "y": 32,
-        "width": 58,
-        "fontSize": 28,
-        "style": "symbol",
-        "kind": "normal"
-      },
-      {
         "text": "Mansão Blackwood, fachada norte",
-        "x": 12,
-        "y": 85,
+        "x": 13,
+        "y": 87,
         "width": 76,
-        "fontSize": 19,
+        "fontSize": 17,
         "style": "script",
         "kind": "normal"
       }
@@ -1766,46 +1762,46 @@ export const templates = [
   },
   {
     "id": "blueprint",
-    "name": "Planta arquitetônica",
+    "name": "Planta do Farol",
     "type": "Mapas",
     "icon": "▥",
     "paper": "blueprint",
     "description": "Esboço técnico de uma construção com cômodos.",
     "layers": [
       {
-        "text": "RESIDÊNCIA BLACKWOOD",
-        "x": 8,
-        "y": 8,
-        "width": 84,
-        "fontSize": 23,
+        "text": "OBSERVAÇÕES / FAROL",
+        "x": 6,
+        "y": 11,
+        "width": 26,
+        "fontSize": 13,
         "style": "heading",
         "kind": "normal"
       },
       {
-        "text": "PLANTA DO SUBSOLO / REV. 03",
-        "x": 9,
-        "y": 23,
-        "width": 81,
-        "fontSize": 15,
-        "style": "mono",
-        "kind": "normal"
-      },
-      {
-        "text": "┌────────┬────────┐\n│ SALA   │ ARQUIVO│\n├────────┼────────┤\n│ ESCADA │ ???    │\n└────────┴────────┘",
-        "x": 16,
-        "y": 42,
-        "width": 74,
-        "fontSize": 19,
-        "style": "mono",
-        "kind": "normal"
-      },
-      {
-        "text": "ESCALA 1:100",
-        "x": 9,
-        "y": 86,
-        "width": 80,
+        "text": "Escada interior alterada. Verificar o piso de baixo.",
+        "x": 6,
+        "y": 17,
+        "width": 24,
         "fontSize": 13,
-        "style": "smallcaps",
+        "style": "script",
+        "kind": "normal"
+      },
+      {
+        "text": "Marca vermelha: possível entrada desconhecida.",
+        "x": 5,
+        "y": 89,
+        "width": 38,
+        "fontSize": 13,
+        "style": "script",
+        "kind": "normal"
+      },
+      {
+        "text": "PLANTA 1:100",
+        "x": 51,
+        "y": 92,
+        "width": 42,
+        "fontSize": 13,
+        "style": "mono",
         "kind": "normal"
       }
     ],
@@ -1839,49 +1835,50 @@ export const templates = [
         "style": "secret",
         "kind": "uv"
       }
-    ]
+    ],
+    "premiumArtwork": true
   },
   {
     "id": "research",
-    "name": "Anotações de pesquisador",
+    "name": "Caderno do Pesquisador",
     "type": "Pesquisa",
     "icon": "⌕",
     "paper": "research",
     "description": "Caderno de estudos com hipóteses e resultados.",
     "layers": [
       {
-        "text": "OBSERVAÇÕES DE CAMPO",
-        "x": 10,
-        "y": 11,
-        "width": 81,
-        "fontSize": 25,
-        "style": "heading",
-        "kind": "normal"
-      },
-      {
-        "text": "PROJETO: A COISA NO LAGO",
-        "x": 10,
-        "y": 26,
-        "width": 80,
-        "fontSize": 16,
+        "text": "AMOSTRA R-027",
+        "x": 17,
+        "y": 19,
+        "width": 42,
+        "fontSize": 15,
         "style": "mono",
         "kind": "normal"
       },
       {
-        "text": "Hipótese I: o fenômeno acompanha as fases da lua.\nHipótese II: os registros anteriores foram apagados.",
-        "x": 10,
-        "y": 42,
-        "width": 81,
-        "fontSize": 18,
+        "text": "Diário do pesquisador",
+        "x": 46,
+        "y": 20,
+        "width": 44,
+        "fontSize": 14,
+        "style": "mono",
+        "kind": "normal"
+      },
+      {
+        "text": "A amostra reage à ausência de luz. Foram registradas alterações impossíveis de classificar.",
+        "x": 11,
+        "y": 72,
+        "width": 55,
+        "fontSize": 13,
         "style": "body",
         "kind": "normal"
       },
       {
-        "text": "Próximo passo: consultar o arquivo nº 23.",
-        "x": 10,
-        "y": 81,
-        "width": 79,
-        "fontSize": 16,
+        "text": "Observação nº 17",
+        "x": 12,
+        "y": 88,
+        "width": 59,
+        "fontSize": 13,
         "style": "script",
         "kind": "normal"
       }
@@ -1916,49 +1913,50 @@ export const templates = [
         "style": "secret",
         "kind": "uv"
       }
-    ]
+    ],
+    "premiumArtwork": true
   },
   {
     "id": "dossier",
-    "name": "Dossiê confidencial",
+    "name": "Dossiê de Investigação • 27-B",
     "type": "Investigação",
     "icon": "▣",
     "paper": "dossier",
     "description": "Capa de arquivo reservado com marcações sigilosas.",
     "layers": [
       {
-        "text": "ARQUIVO RESERVADO",
-        "x": 10,
-        "y": 11,
-        "width": 80,
-        "fontSize": 27,
-        "style": "stamp",
-        "kind": "normal"
-      },
-      {
-        "text": "DOSSIÊ 27-Β",
-        "x": 12,
-        "y": 30,
-        "width": 76,
-        "fontSize": 32,
+        "text": "INCIDENTE DO FAROL",
+        "x": 27,
+        "y": 21,
+        "width": 65,
+        "fontSize": 16,
         "style": "heading",
         "kind": "normal"
       },
       {
-        "text": "ASSUNTO: INCIDENTE DO FAROL",
-        "x": 11,
-        "y": 48,
-        "width": 79,
-        "fontSize": 18,
+        "text": "ARQUIVO 27-Β",
+        "x": 25,
+        "y": 25,
+        "width": 59,
+        "fontSize": 14,
         "style": "mono",
         "kind": "normal"
       },
       {
-        "text": "Acesso restrito ao investigador designado. A reprodução deste documento é proibida.",
+        "text": "Registro de luzes no antigo farol. Testemunhas e horários não coincidem.",
+        "x": 47,
+        "y": 40,
+        "width": 42,
+        "fontSize": 14,
+        "style": "mono",
+        "kind": "normal"
+      },
+      {
+        "text": "Anexo classificado: relatório em revisão.",
         "x": 11,
-        "y": 72,
-        "width": 77,
-        "fontSize": 16,
+        "y": 75,
+        "width": 75,
+        "fontSize": 13,
         "style": "body",
         "kind": "normal"
       }
@@ -1993,7 +1991,8 @@ export const templates = [
         "style": "secret",
         "kind": "uv"
       }
-    ]
+    ],
+    "premiumArtwork": true
   },
   {
     "id": "classified",
