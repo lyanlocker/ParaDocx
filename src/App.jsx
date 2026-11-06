@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase as db } from './lib/supabase';
 import { templates, newPages, templateCategories } from './data/templates';
+import HandoutArt from './HandoutArt.jsx';
 import PlayerPortal from './PlayerPortal.jsx';
 import MasterSetup from './MasterSetup.jsx';
 import {masterAuth} from './lib/masterAuth.js';
@@ -12,7 +13,7 @@ const readMasterSetupToken = () => (window.location.hash.match(/^#\/master-setup
 const id = () => Math.random().toString(36).slice(2, 11);
 const getTemplate = (key) => templates.find(t => t.id === key) || templates[0];
 
-function Sheet({ pages, side, paper, editable, selected, onSelect, onDrag }) {
+function Sheet({ pages, side, paper, templateId, editable, selected, onSelect, onDrag }) {
   const [uv, setUV] = useState(false);
   const [point, setPoint] = useState({ x: -100, y: -100 });
   const sheet = useRef(null);
@@ -54,7 +55,7 @@ function Sheet({ pages, side, paper, editable, selected, onSelect, onDrag }) {
     </div>
     <div className={'document-sheet sheet-' + paper} ref={sheet} onPointerMove={move} onPointerDown={!editable ? move : undefined} onPointerUp={() => dragging.current = null} onPointerCancel={() => dragging.current = null} onPointerLeave={() => { if (!editable) setPoint({x: -100,y:-100}); }}>
       <div className="paper-grain" />
-      <div className="sheet-ornament">ARQUIVO DE EVIDÊNCIAS • PARADOCX</div>
+      <HandoutArt templateId={templateId} side={side} />
       {list.filter(l => l.kind !== 'uv').map(renderLayer)}
       <div className={'uv-content ' + (editable ? 'uv-editable' : '')} style={editable ? undefined : { WebkitMaskImage: uvMask, maskImage: uvMask }}>
         {list.filter(l => l.kind === 'uv').map(renderLayer)}
@@ -294,8 +295,8 @@ export default function App() {
           <div className="seat-list">{players.map(p=><div className="seat-row" key={p.id}><span className="profile-icon">{p.display_name[0]?.toUpperCase()}</span><div className="seat-detail"><strong>{p.display_name}</strong><small>{documents.filter(d=>d.holder_seat_id===p.id&&d.is_published).length} documento(s) no inventário</small></div><div className="seat-actions">{playerLinks[p.id]&&<button className="primary compact" onClick={()=>copyLink(playerLinks[p.id])}>Copiar link individual</button>}<button className="outline compact" disabled={working} onClick={()=>rotateSeat(p)}>{playerLinks[p.id]?'Trocar link':'Gerar novo link'}</button><button className="danger" onClick={()=>deactivateSeat(p)} disabled={working}>Desativar</button></div></div>)}{players.length===0&&<div className="empty">Nenhum jogador cadastrado. Crie a primeira vaga usando o nome dele acima.</div>}</div>
         </section>}
         {isMaster&&<section className="handout-library" id="modelos">
-          <div className="section-heading"><h2>Biblioteca de modelos</h2><small>{templates.length} MODELOS ORIGINAIS</small></div>
-          <p className="library-intro">Escolha um documento e personalize o texto, o verso e as mensagens invisíveis no Estúdio.</p>
+          <div className="section-heading"><h2>Acervo ilustrado de documentos</h2><small>{templates.length} PEÇAS EDITÁVEIS</small></div>
+          <p className="library-intro">Documentos com gravuras, selos, campos e composições próprias. O desenho é a base: você edita cada texto, trabalha no verso e esconde pistas com luz negra.</p>
           <div className="library-controls">
             <label>Buscar modelo<input type="search" placeholder="Ex.: carta, jornal, mapa, médico..." value={templateQuery} onChange={e=>setTemplateQuery(e.target.value)}/></label>
             <label>Categoria<select value={templateCategory} onChange={e=>setTemplateCategory(e.target.value)}>{templateCategories.map(c=><option key={c} value={c}>{c}</option>)}</select></label>
@@ -303,9 +304,9 @@ export default function App() {
           <div className="library-results">{filteredTemplates.length} de {templates.length} modelos disponíveis</div>
           <div className="templates">{filteredTemplates.map(t=><button key={t.id} className="template-preview" onClick={()=>startEditor(null,t)} title={t.description}>
             <span className={'preview-document sheet-'+t.paper}>
-              <span className="preview-icon">{t.icon}</span>
-              <span className="preview-ink">{t.layers.slice(0,2).map((layer,i)=><span key={i}>{layer.text.split('\n')[0].slice(0,54)}</span>)}</span>
-              <span className="preview-stamp">PARADOCX • ARQUIVO</span>
+              <HandoutArt templateId={t.id} preview />
+              <span className="preview-composed-ink">{t.layers.filter(l=>l.kind!=='uv').slice(0,4).map((layer,i)=><span className={'preview-text layer-'+(layer.style||'body')} key={i} style={{left:layer.x+'%',top:layer.y+'%',width:layer.width+'%',fontSize:Math.max(6,Math.min(12,layer.fontSize*.34))+'px'}}>{layer.text.slice(0,95)}</span>)}</span>
+              <span className="preview-corner">ARTES ORIGINAIS • PARADOCX</span>
             </span>
             <span className="template-card-info"><strong>{t.name}</strong><small>{t.type}</small></span>
           </button>)}</div>
@@ -332,7 +333,7 @@ export default function App() {
             <p className="editor-hint">Modo rápido para preencher. Modo livre para arrastar, posicionar, mudar estilos e criar textos UV. Você pode alternar entre frente e verso acima da folha.</p>
           </aside>}
           <div className="editor-stage"><div className="page-switch"><button className={side==='front'?'chosen':''} onClick={()=>{setSide('front');setSelected(null)}}>Frente</button><button className={side==='back'?'chosen':''} onClick={()=>{setSide('back');setSelected(null)}}>Verso</button></div>
-            <Sheet key={screen+side+document?.id} pages={pages} side={side} paper={getTemplate(template).paper} editable={screen==='editor'} selected={selected} onSelect={setSelected} onDrag={(layerId,x,y)=>updateLayer(layerId,{x,y})}/>
+            <Sheet key={screen+side+document?.id} pages={pages} side={side} paper={getTemplate(template).paper} templateId={template} editable={screen==='editor'} selected={selected} onSelect={setSelected} onDrag={(layerId,x,y)=>updateLayer(layerId,{x,y})}/>
           </div>
         </div>
       </section> : null}
