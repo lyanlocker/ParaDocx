@@ -42,9 +42,9 @@ const schemes={
   blueprint:{ink:'#41524e',accent:C.blue},lab:{ink:'#44334c',accent:C.violet},medical:{ink:'#42514b',accent:C.blue},
   photo:{ink:C.ink,accent:C.gold},diary:{ink:C.ink,accent:C.olive}
 };
-const heroThemes={letter:'letter',report:'report',dossier:'report',news:'news',occult:'occult',research:'lab',lab:'lab',blueprint:'blueprint',map:'blueprint',photo:'photo'};
+const heroThemes={letter:'letter',report:'report',dossier:'report',news:'news',occult:'occult',research:'lab',lab:'lab',blueprint:'blueprint',photo:'photo'};
 const customTheme={
-  telegram:'telegram',diary:'diary',postcard:'postcard',missing:'poster',wanted:'poster',medical:'medical',autopsy:'medical',certificate:'certificate',passport:'passport',library:'library',ticket:'ticket',boarding:'ticket',ship:'ship',invoice:'invoice',receipt:'receipt',envelope:'envelope',classified:'news',radio:'telegram',death:'certificate',evidence:'report',menu:'menu',invitation:'invitation',cryptogram:'occult',obituary:'news',blank:'blank'
+  map:'map',telegram:'telegram',diary:'diary',postcard:'postcard',missing:'poster',wanted:'poster',medical:'medical',autopsy:'medical',certificate:'certificate',passport:'passport',library:'library',ticket:'ticket',boarding:'ticket',ship:'ship',invoice:'invoice',receipt:'receipt',envelope:'envelope',classified:'news',radio:'telegram',death:'certificate',evidence:'report',menu:'menu',invitation:'invitation',cryptogram:'occult',obituary:'news',blank:'blank'
 };
 
 export default function HandoutArt({templateId='letter',side='front',preview=false}) {
