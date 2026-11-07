@@ -11,7 +11,7 @@ Plataforma para criar documentos investigativos de RPG e gerenciar inventários 
 - **Mecânicas:** área reservada, sem funcionalidade ativa.
 
 ## Editor
-Modelos com campos rápidos e edição livre por camadas, frente e verso, mensagens reveladas pela luz negra.
+Modelos com campos rápidos e edição livre por camadas, frente e verso, mensagens reveladas pela luz negra. Ao ativar a lanterna, a interface fica escura e um feixe azul-violeta acompanha mouse e toque, iluminando apenas a região examinada.
 
 ## Tecnologias
 React + Vite, Supabase Auth/Postgres/RLS/Edge Functions e Vercel.
@@ -32,3 +32,23 @@ A primeira implementação está publicada. O acesso do mestre exige a ativaçã
 O administrador do projeto gera um token de ativação de 256 bits na tabela `master_setup_token` (o valor em texto puro **não** deve ser salvo no GitHub) e o entrega ao mestre em um link `#/master-setup/<token>`. O mestre preenche e-mail e senha. A função `master-access` cria a única identidade do aplicativo e deixa o token inutilizável. Entradas posteriores usam `mestre01` + senha, sem solicitar e-mail novamente.
 
 A política de criação de campanhas exige essa identidade aprovada; outros usuários de Auth não podem criar campanhas.
+
+## Importação de arquivos
+
+Na campanha, o mestre usa **Importar documento** ou abre qualquer documento no editor e encontra a ferramenta de importação.
+
+- **PNG/JPG/WEBP:** a imagem é convertida em fundo privado da frente ou do verso selecionado.
+- **PDF:** as primeiras duas páginas são convertidas no navegador para os fundos de frente e verso. Se o PDF possuir texto digital selecionável, é possível extrair esse texto para uma camada editável por cima. PDFs digitalizados não têm OCR automático.
+- **TXT/MD:** o conteúdo é convertido diretamente em uma ou duas camadas de texto totalmente editáveis.
+- **Tarja:** bloqueio visual editável (posição, tamanho, cor, opacidade) para cobrir palavras já impressas em scans e escrever texto novo por cima; não altera os pixels originais.
+- Todas as importações aceitam até 15 MB de arquivo original; imagens convertidas devem ter até 5 MB cada. O arquivo permanece local até o mestre salvar o documento.
+
+### Privacidade dos fundos importados
+
+Os arquivos convertidos ficam no bucket **privado** `handout-assets`, em um caminho de campanha. Políticas do Storage permitem apenas ao mestre daquela campanha enviar, visualizar ou remover arquivos. A página do jogador nunca recebe uma URL pública de Storage: busca cada imagem via `player-access` usando `POST` e o token individual. A função verifica o documento, a campanha, a posse atual e a publicação **antes** de devolver os bytes da imagem. Ao transferir o documento, a próxima requisição do antigo jogador é negada.
+
+**Limite:** um jogador pode guardar um arquivo que já tenha visualizado (assim como uma captura de tela); a revogação impede novos acessos, não apaga arquivos que a pessoa salvou.
+
+## Testes
+
+Use `npm test` para verificar modelos e tipos de importação; `npm run build` valida a compilação do site. Fluxos completos com mestre e dois jogadores devem ser testados também no navegador.

@@ -3,6 +3,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { supabase as db } from './lib/supabase';
 import { templates, newPages, templateCategories } from './data/templates';
 import HandoutArt from './HandoutArt.jsx';
+import DocumentCanvas from './DocumentCanvas.jsx';
+import LayerProperties from './LayerProperties.jsx';
+import {prepareImport, uploadExtension, INPUT_ACCEPT} from './lib/importHandout.js';
 import PlayerPortal from './PlayerPortal.jsx';
 import MasterSetup from './MasterSetup.jsx';
 import {masterAuth} from './lib/masterAuth.js';
@@ -13,58 +16,8 @@ const readMasterSetupToken = () => (window.location.hash.match(/^#\/master-setup
 const id = () => Math.random().toString(36).slice(2, 11);
 const getTemplate = (key) => templates.find(t => t.id === key) || templates[0];
 
-function Sheet({ pages, side, paper, templateId, editable, selected, onSelect, onDrag }) {
-  const [uv, setUV] = useState(false);
-  const [point, setPoint] = useState({ x: -100, y: -100 });
-  const sheet = useRef(null);
-  const dragging = useRef(null);
-  const list = Array.isArray(pages?.[side]) ? pages[side] : [];
-  function down(e, layer) {
-    if (!editable) return;
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect(layer.id);
-    dragging.current = { id: layer.id, x: layer.x, y: layer.y, startX: e.clientX, startY: e.clientY };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  }
-  function move(e) {
-    const b = sheet.current?.getBoundingClientRect();
-    if (!b) return;
-    const x = Math.round((e.clientX - b.left) / b.width * 100);
-    const y = Math.round((e.clientY - b.top) / b.height * 100);
-    setPoint({ x, y });
-    if (editable && dragging.current) {
-      const d = dragging.current;
-      const nx = Math.min(96, Math.max(0, Math.round(d.x + (e.clientX - d.startX) / b.width * 100)));
-      const ny = Math.min(96, Math.max(0, Math.round(d.y + (e.clientY - d.startY) / b.height * 100)));
-      onDrag(d.id, nx, ny);
-    }
-  }
-  const uvMask = uv ? 'radial-gradient(circle 110px at ' + point.x + '% ' + point.y + '%, black 12%, transparent 100%)' : 'linear-gradient(transparent,transparent)';
-  const renderLayer = layer => <div
-    key={layer.id}
-    className={'document-layer layer-' + (layer.style || 'body').replace(/[^a-z]/g,'') + ' ' + (layer.kind === 'uv' ? 'secret-text ' : '') + (editable && selected === layer.id ? 'is-selected' : '')}
-    style={{ left: layer.x + '%', top: layer.y + '%', width: (layer.width || 74) + '%', fontSize: 'clamp(10px, ' + (Number(layer.fontSize || 18)/5).toFixed(2) + 'vw, ' + Number(layer.fontSize || 18) + 'px)' }}
-    onPointerDown={editable ? e => down(e, layer) : undefined}
-  >{layer.text}</div>;
-  return <div className="document-frame">
-    <div className="sheet-toolbar">
-      <span>☷ DOCUMENTO / {side === 'front' ? 'FRENTE' : 'VERSO'}</span>
-      {!editable && <button className={'uv-toggle ' + (uv ? 'illuminated' : '')} onClick={() => setUV(v => !v)}>{uv ? '☼ Desligar UV' : '☼ Luz negra'}</button>}
-      {editable && <span className="editor-indicator">CAMADAS SECRETAS VISÍVEIS NO EDITOR</span>}
-    </div>
-    <div className={'document-sheet sheet-' + paper} ref={sheet} onPointerMove={move} onPointerDown={!editable ? move : undefined} onPointerUp={() => dragging.current = null} onPointerCancel={() => dragging.current = null} onPointerLeave={() => { if (!editable) setPoint({x: -100,y:-100}); }}>
-      <div className="paper-grain" />
-      <HandoutArt templateId={templateId} side={side} />
-      {list.filter(l => l.kind !== 'uv').map(renderLayer)}
-      <div className={'uv-content ' + (editable ? 'uv-editable' : '')} style={editable ? undefined : { WebkitMaskImage: uvMask, maskImage: uvMask }}>
-        {list.filter(l => l.kind === 'uv').map(renderLayer)}
-      </div>
-      {!editable && uv && <div className="torch" style={{ left: point.x + '%', top: point.y + '%' }} />}
-    </div>
-    <small className="paper-help">{editable ? 'Arraste os textos para reposicionar · mensagens ocultas aparecem em dourado' : 'Mova o mouse ou o dedo sobre a folha para investigar com a luz negra'}</small>
-  </div>;
-}
+// Both the master and player use the same canvas, so UV and imported scans behave alike.
+const Sheet=DocumentCanvas;
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -96,9 +49,15 @@ export default function App() {
   const [templateQuery,setTemplateQuery]=useState('');
   const [templateCategory,setTemplateCategory]=useState('Todos');
   const [selected, setSelected] = useState(null);
+  const [pendingAssets,setPendingAssets]=useState({});
+  const [importBusy,setImportBusy]=useState(false);
+  const [extractedPdfText,setExtractedPdfText]=useState({});
+  const [signedBackgroundUrl,setSignedBackgroundUrl]=useState('');
   const isMaster = !!campaign && campaign.owner_id === session?.user?.id;
   const players = playerSeats.filter(p => p.enabled);
   const selectedLayer = (pages?.[side] || []).find(l => l.id === selected);
+  const currentAssetPath=pages?.backgrounds?.[side]||null;
+  const currentBackgroundUrl=pendingAssets?.[side]?.previewUrl || signedBackgroundUrl;
   const filteredTemplates=templates.filter(t=>(templateCategory==='Todos'||t.type===templateCategory) && [t.name,t.type,t.description].join(' ').toLocaleLowerCase('pt-BR').includes(templateQuery.trim().toLocaleLowerCase('pt-BR'))).sort((a,b)=>Number(!!b.premiumArtwork)-Number(!!a.premiumArtwork));
 
   useEffect(() => {
@@ -107,6 +66,21 @@ export default function App() {
     return ()=>window.removeEventListener('hashchange',onHashChange);
   },[]);
   useEffect(()=>{if(campaign) setLimitDraft(String(campaign.max_players));},[campaign?.id]);
+
+  useEffect(()=>{
+    let active=true;
+    if(!db || !currentAssetPath || !['editor','viewer'].includes(screen)) {
+      setSignedBackgroundUrl('');return;
+    }
+    setSignedBackgroundUrl('');
+    db.storage.from('handout-assets').createSignedUrl(currentAssetPath,3600)
+      .then(({data,error})=>{
+        if(!active)return;
+        if(error)setNotice('Não foi possível carregar a imagem importada: '+error.message);
+        else setSignedBackgroundUrl(data?.signedUrl||'');
+      });
+    return ()=>{active=false};
+  },[screen,side,currentAssetPath]);
 
   useEffect(() => {
     if (!db) { setChecking(false); return; }
@@ -211,37 +185,129 @@ export default function App() {
     setTemplate(p.id);
     setTitle(copyOf ? copyOf.title + ' (cópia)' : (item?.title || p.name));
     setPages(source ? JSON.parse(JSON.stringify(source.pages || {front:[],back:[]})) : newPages(p));
+    setPendingAssets(previous=>{Object.values(previous).forEach(asset=>asset?.previewUrl&&URL.revokeObjectURL(asset.previewUrl));return {};});
+    setExtractedPdfText({});
     setSide('front');setMode('quick');setSelected(null);setScreen('editor');
   }
   function openViewer(item) {
     setDocument(item);setTitle(item.title);setTemplate(item.template);
+    setPendingAssets({});setExtractedPdfText({});
     setPages(item.pages || {front:[],back:[]});setSide('front');setScreen('viewer');
   }
   function updateLayer(layerId, field) {
     setPages(prev => ({...prev,[side]:(prev[side] || []).map(l=>l.id===layerId?{...l,...field}:l)}));
   }
   function addLayer(kind) {
-    const l = {id:id(),kind,style:kind==='uv'?'secret':'body',text:kind==='uv'?'Mensagem invisível':'Novo texto',x:14,y:25,width:74,fontSize:20};
+    const l=kind==='cover'
+      ?{id:id(),kind:'cover',x:14,y:25,width:74,height:10,color:'#eee1c7',opacity:1}
+      :{id:id(),kind,style:kind==='uv'?'secret':'body',text:kind==='uv'?'Mensagem invisível':'Novo texto',x:14,y:25,width:74,fontSize:20};
     setPages(p=>({...p,[side]:[...(p[side]||[]),l]}));setSelected(l.id);setMode('advanced');
   }
   function deleteLayer() {
     setPages(p=>({...p,[side]:p[side].filter(l=>l.id!==selected)}));setSelected(null);
   }
   function chooseTemplate(key) {
-    const p = getTemplate(key);
-    if (((pages.front||[]).length || (pages.back||[]).length) && !window.confirm('Trocar o modelo vai substituir os textos atuais. Continuar?')) return;
+    const p=getTemplate(key);
+    const hasContent=(pages.front||[]).length||(pages.back||[]).length||
+      Object.values(pages.backgrounds||{}).some(Boolean)||
+      Object.values(pendingAssets).some(Boolean);
+    if(hasContent&&!window.confirm('Trocar o modelo substituirá os textos e fundos importados deste rascunho. Continuar?'))return;
+    Object.values(pendingAssets).forEach(asset=>asset?.previewUrl&&URL.revokeObjectURL(asset.previewUrl));
+    setPendingAssets({});setExtractedPdfText({});setSignedBackgroundUrl('');
     setTemplate(key);setPages(newPages(p));setSelected(null);setMode('quick');
+  }
+  async function importSelectedFile(event) {
+    const file=event.target.files?.[0];
+    event.target.value='';
+    if(!file)return;
+    setImportBusy(true);
+    try{
+      const imported=await prepareImport(file,side);
+      if(imported.kind==='text') {
+        setPages(old=>{
+          const next={...old};
+          for(const [page,text] of Object.entries(imported.texts)){
+            const layer={id:id(),kind:'normal',style:'body',text,x:10,y:15,width:80,fontSize:17};
+            next[page]=[...(old[page]||[]),layer];
+          }
+          return next;
+        });
+        setMode('quick');
+        setNotice('Texto importado como camada editável na frente/verso.');
+      }else{
+        // New raster backgrounds are local until "Salvar documento" is clicked.
+        setPendingAssets(old=>{
+          const next={...old};
+          for(const [page,blob] of Object.entries(imported.images)) {
+            if(old[page]?.previewUrl)URL.revokeObjectURL(old[page].previewUrl);
+            next[page]={blob,previewUrl:URL.createObjectURL(blob)};
+          }
+          return next;
+        });
+        setPages(old=>{
+          const backgrounds={...(old.backgrounds||{})};
+          for(const page of Object.keys(imported.images)) backgrounds[page]=null;
+          return {...old,backgrounds};
+        });
+        setExtractedPdfText(imported.kind==='pdf'?imported.extracted||{}:{});
+        setNotice(imported.notice||
+          (imported.kind==='pdf'?'PDF importado como fundo na frente e/ou verso. Acrescente textos e pistas UV por cima.':
+            'Imagem importada como fundo. Use as camadas para escrever e esconder pistas UV.'));
+      }
+      if(!document && template==='blank')setTitle(file.name.replace(/\.[^.]+$/,'').slice(0,150));
+    }catch(error){setNotice(error.message||'Não foi possível importar o arquivo.');}
+    finally{setImportBusy(false);}
+  }
+  function addExtractedPdfText() {
+    const extracted=extractedPdfText?.[side];
+    if(!extracted)return;
+    const layer={id:id(),kind:'normal',style:'body',text:extracted,
+      x:11,y:48,width:78,fontSize:16};
+    setPages(old=>({...old,[side]:[...(old[side]||[]),layer]}));
+    setSelected(layer.id);setMode('advanced');
+    setExtractedPdfText(old=>({...old,[side]:''}));
+    setNotice('Texto extraído em uma camada editável. O texto original permanece na imagem do PDF; reposicione a camada conforme necessário.');
+  }
+  function removeImportedBackground(){
+    if(pendingAssets[side]?.previewUrl)URL.revokeObjectURL(pendingAssets[side].previewUrl);
+    setPendingAssets(old=>({...old,[side]:null}));
+    setPages(old=>({...old,backgrounds:{...(old.backgrounds||{}),[side]:null}}));
+    setSignedBackgroundUrl('');setExtractedPdfText(old=>({...old,[side]:''}));
   }
   async function saveDocument() {
     if(!title.trim())return setNotice('Informe um título.');
-    if(!Array.isArray(pages.front)||!Array.isArray(pages.back))return setNotice('As páginas estão inválidas.');
+    if(!Array.isArray(pages.front)||!Array.isArray(pages.back))
+      return setNotice('As páginas estão inválidas.');
+    if(working||importBusy)return;
     setWorking(true);
-    const body = {title:title.trim(),template,pages};
-    const result = document ? await db.from('documents').update(body).eq('id',document.id).select().single() :
-      await db.from('documents').insert({...body,campaign_id:campaign.id,created_by:session.user.id}).select().single();
-    setWorking(false);
-    if(result.error)return setNotice(result.error.message);
-    await refreshCampaign(campaign.id);setScreen('campaign');setNotice('Documento salvo!');
+    const uploaded=[];
+    try{
+      const nextPages={...pages,backgrounds:{...(pages.backgrounds||{})}};
+      for(const page of ['front','back']){
+        const blob=pendingAssets[page]?.blob;
+        if(!blob)continue;
+        if(blob.size>5*1024*1024)throw new Error('A imagem '+page+' excede 5 MB após a conversão.');
+        const path=campaign.id+'/'+window.crypto.randomUUID()+'.'+uploadExtension(blob);
+        const {error:uploadError}=await db.storage.from('handout-assets').upload(path,blob,{
+          contentType:blob.type,cacheControl:'3600',upsert:false
+        });
+        if(uploadError)throw uploadError;
+        uploaded.push(path);
+        nextPages.backgrounds[page]=path;
+      }
+      const body={title:title.trim(),template,pages:nextPages};
+      const result=document
+        ?await db.from('documents').update(body).eq('id',document.id).select().single()
+        :await db.from('documents').insert({...body,campaign_id:campaign.id,created_by:session.user.id}).select().single();
+      if(result.error)throw result.error;
+      Object.values(pendingAssets).forEach(asset=>asset?.previewUrl&&URL.revokeObjectURL(asset.previewUrl));
+      setPendingAssets({});setPages(nextPages);
+      await refreshCampaign(campaign.id);
+      setScreen('campaign');setNotice('Documento salvo, incluindo as imagens privadas e camadas editáveis.');
+    }catch(error){
+      if(uploaded.length)await db.storage.from('handout-assets').remove(uploaded);
+      setNotice('Não foi possível salvar: '+(error.message||'erro desconhecido'));
+    }finally{setWorking(false);}
   }
   async function assignDocument(doc, uid) {
     const {error} = await db.from('documents').update({holder_seat_id:uid || null,holder_id:null,is_published:!!uid}).eq('id',doc.id);
@@ -285,7 +351,7 @@ export default function App() {
         <div className="panel"><span className="eyebrow">02 / CONVIDAR INVESTIGADORES</span><h2>Links individuais</h2><p>Os jogadores não precisam criar conta nem digitar senha. Abra uma campanha, defina o nome de cada jogador e copie o link exclusivo dele.</p><div className="invitation-summary">✦ Cada link mostra apenas o inventário daquele jogador.</div></div></div>
         <div className="section-heading"><h2>Campanhas disponíveis</h2><small>{campaigns.length} ARQUIVOS</small></div><div className="campaign-grid">{campaigns.map(c=><button key={c.id} className="campaign-card" onClick={()=>{setCampaign(c);setScreen('campaign')}}><span className="case-symbol">✧</span><small>{c.owner_id===session.user.id?'MESTRE':'INVESTIGADOR'}</small><h3>{c.name}</h3><span className="card-footer">ABRIR ARQUIVO ↗</span></button>)}{campaigns.length===0&&<div className="empty">Você ainda não participa de nenhuma campanha.</div>}</div>
       </section> :
-      screen==='campaign' ? <section className="page"><div className="eyebrow">ARQUIVO DE CAMPANHA / {isMaster?'CONTROLE DO MESTRE':'INVESTIGAÇÃO'}</div><div className="page-heading"><div><h1>{campaign.name}<span className="period">.</span></h1><p>{isMaster?'Organize e distribua suas pistas.':'Investigue os documentos recebidos do mestre.'}</p></div>{isMaster&&<div className="campaign-actions"><button className="outline" onClick={()=>window.document.getElementById('modelos')?.scrollIntoView({behavior:'smooth'})}>Explorar {templates.length} modelos ↓</button><button className="primary" onClick={()=>startEditor(null,templates[0])}>+ Criar documento</button></div>}</div>
+      screen==='campaign' ? <section className="page"><div className="eyebrow">ARQUIVO DE CAMPANHA / {isMaster?'CONTROLE DO MESTRE':'INVESTIGAÇÃO'}</div><div className="page-heading"><div><h1>{campaign.name}<span className="period">.</span></h1><p>{isMaster?'Organize e distribua suas pistas.':'Investigue os documentos recebidos do mestre.'}</p></div>{isMaster&&<div className="campaign-actions"><button className="outline" onClick={()=>window.document.getElementById('modelos')?.scrollIntoView({behavior:'smooth'})}>Explorar {templates.length} modelos ↓</button><button className="outline" onClick={()=>{startEditor(null,getTemplate('blank'));setNotice('Escolha seu arquivo no painel Importar documento.');}}>⇧ Importar documento</button><button className="primary" onClick={()=>startEditor(null,templates[0])}>+ Criar documento</button></div>}</div>
         <div className="stats"><div><small>DOCUMENTOS VISÍVEIS</small><strong>{documents.length}</strong></div><div><small>INVESTIGADORES</small><strong>{players.length}/{campaign.max_players}</strong></div><div><small>ACESSO</small><strong>{isMaster?'Mestre':'Jogador'}</strong></div></div>
         {isMaster&&<section className="master-players">
           <div className="section-heading"><h2>Jogadores e acessos individuais</h2><small>{players.length}/{campaign.max_players} JOGADORES</small></div>
@@ -325,16 +391,30 @@ export default function App() {
       screen==='mechanics' ? <section className="mechanics"><span className="eyebrow">MÓDULO EXPERIMENTAL</span><div className="mystery-icon">✧</div><h1>A próxima peça<br/><em>do mistério.</em></h1><p>Espaço reservado para enigmas e mecanismos interativos que criaremos juntos.</p><div className="coming">◈ MÓDULO INATIVO</div><button className="outline" onClick={()=>setScreen('campaign')}>← Voltar aos documentos</button></section> :
       ['editor','viewer'].includes(screen) ? <section className="workspace"><div className="workspace-heading"><button className="back-link" onClick={()=>setScreen('campaign')}>← Arquivo</button><div><span className="eyebrow">{screen==='editor'?'ESTÚDIO DE DOCUMENTOS':'LEITOR DE EVIDÊNCIAS'}</span><h2>{title}</h2></div>{screen==='editor'&&<button className="primary" onClick={saveDocument} disabled={working}>{working?'Salvando...':'Salvar documento ↗'}</button>}</div>
         <div className={'workspace-grid '+(screen==='viewer'?'view-only':'')}>
-          {screen==='editor'&&<aside className="editor-panel"><div className="editor-title">ESTÚDIO DE DOCUMENTOS <span>✧</span></div><div className="editor-template-info">{getTemplate(template).icon} {getTemplate(template).description}</div><label>Título<input maxLength="150" value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Modelo<select value={template} onChange={e=>chooseTemplate(e.target.value)}>{templates.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
+          {screen==='editor'&&<aside className="editor-panel"><div className="editor-title">ESTÚDIO DE DOCUMENTOS <span>✧</span></div>
+            <div className="import-panel">
+              <div className="import-panel-title">⇧ IMPORTAR DOCUMENTO</div>
+              <p>Use uma imagem ou PDF como papel de fundo e adicione camadas normais e UV. Arquivos TXT/MD entram como texto realmente editável.</p>
+              <label className="file-input-label">Selecionar imagem, PDF ou TXT
+                <input type="file" accept={INPUT_ACCEPT} disabled={importBusy||working} onChange={importSelectedFile}/>
+              </label>
+              {importBusy&&<p className="import-progress">Processando arquivo e preparando as páginas…</p>}
+              {(pendingAssets[side]||pages?.backgrounds?.[side])&&<div className="import-asset-choices">
+                <small>✓ Imagem definida para {side==='front'?'frente':'verso'}</small>
+                <button type="button" className="outline compact" onClick={removeImportedBackground}>Remover fundo deste lado</button>
+              </div>}
+              {extractedPdfText?.[side]&&<button type="button" className="outline compact" onClick={addExtractedPdfText}>
+                + Extrair texto do PDF para uma camada editável
+              </button>}
+              <small>PNG, JPG, WEBP (lado selecionado), PDF (páginas 1 e 2), TXT e MD • até 15 MB. A arte original do PDF/imagem vira fundo: use uma tarja para cobrir texto antigo e escreva outro por cima, além de adicionar pistas UV.</small>
+            </div><div className="editor-template-info">{getTemplate(template).icon} {getTemplate(template).description}</div><label>Título<input maxLength="150" value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Modelo<select value={template} onChange={e=>chooseTemplate(e.target.value)}>{templates.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
             <div className="mode-switch"><button className={mode==='quick'?'active':''} onClick={()=>setMode('quick')}>Campos rápidos</button><button className={mode==='advanced'?'active':''} onClick={()=>setMode('advanced')}>Camadas livres</button></div>
-            {mode==='quick'?<div className="field-list">{(pages[side]||[]).map((l,i)=><label key={l.id}>{l.kind==='uv'?'✧ Mensagem secreta':'Texto '+(i+1)}<textarea rows="3" value={l.text} onChange={e=>updateLayer(l.id,{text:e.target.value})}/></label>)}<button className="outline" onClick={()=>addLayer('normal')}>+ Adicionar texto</button><button className="outline" onClick={()=>addLayer('uv')}>+ Adicionar segredo UV</button></div>:<><div className="layer-actions"><button onClick={()=>addLayer('normal')}>+ Texto</button><button onClick={()=>addLayer('uv')}>+ Luz negra</button></div><div className="layer-list">{(pages[side]||[]).map(l=><button className={selected===l.id?'selected':''} key={l.id} onClick={()=>setSelected(l.id)}>{l.kind==='uv'?'✧':'☰'} {l.text.slice(0,27)||'Texto vazio'}</button>)}</div>{selectedLayer&&<div className="layer-properties"><strong>Configurar camada</strong><textarea rows="4" value={selectedLayer.text} onChange={e=>updateLayer(selected,{text:e.target.value})}/><label>Tamanho da fonte: {selectedLayer.fontSize}<input type="range" min="10" max="44" value={selectedLayer.fontSize} onChange={e=>updateLayer(selected,{fontSize:Number(e.target.value)})}/></label><label>Largura: {selectedLayer.width}%<input type="range" min="20" max="95" value={selectedLayer.width} onChange={e=>updateLayer(selected,{width:Number(e.target.value)})}/></label>
-                <div className="position-row"><label>Horizontal (%)<input type="number" min="0" max="94" value={Math.round(selectedLayer.x)} onChange={e=>updateLayer(selected,{x:Math.max(0,Math.min(94,Number(e.target.value)||0))})}/></label><label>Vertical (%)<input type="number" min="0" max="94" value={Math.round(selectedLayer.y)} onChange={e=>updateLayer(selected,{y:Math.max(0,Math.min(94,Number(e.target.value)||0))})}/></label></div>
-                <label>Estilo<select value={selectedLayer.style||'body'} onChange={e=>updateLayer(selected,{style:e.target.value})}>{[['body','Texto comum'],['script','Manuscrito'],['heading','Cabeçalho'],['headline','Manchete'],['mono','Máquina de escrever'],['stamp','Carimbo'],['symbol','Símbolos'],['smallcaps','Letras pequenas']].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
-                <button className="danger" onClick={deleteLayer}>Excluir camada ×</button></div>}</>}
+            {mode==='quick'?<div className="field-list">{(pages[side]||[]).filter(l=>l.kind!=='cover').map((l,i)=><label key={l.id}>{l.kind==='uv'?'✧ Mensagem secreta':'Texto '+(i+1)}<textarea rows="3" value={l.text} onChange={e=>updateLayer(l.id,{text:e.target.value})}/></label>)}<button className="outline" onClick={()=>addLayer('normal')}>+ Adicionar texto</button><button className="outline" onClick={()=>addLayer('uv')}>+ Adicionar segredo UV</button><button className="outline" onClick={()=>addLayer('cover')}>+ Tarja para substituir texto</button></div>:<><div className="layer-actions"><button onClick={()=>addLayer('normal')}>+ Texto</button><button onClick={()=>addLayer('uv')}>+ Luz negra</button><button onClick={()=>addLayer('cover')}>+ Tarja</button></div><div className="layer-list">{(pages[side]||[]).map(l=><button className={selected===l.id?'selected':''} key={l.id} onClick={()=>setSelected(l.id)}>{l.kind==='cover'?'▧':l.kind==='uv'?'✧':'☰'} {l.kind==='cover'?'Tarja de substituição':(l.text||'').slice(0,27)||'Texto vazio'}</button>)}</div>{selectedLayer&&<LayerProperties layer={selectedLayer}
+              onChange={fields=>updateLayer(selected,fields)} onDelete={deleteLayer}/>}</>}
             <p className="editor-hint">Modo rápido para preencher. Modo livre para arrastar, posicionar, mudar estilos e criar textos UV. Você pode alternar entre frente e verso acima da folha.</p>
           </aside>}
           <div className="editor-stage"><div className="page-switch"><button className={side==='front'?'chosen':''} onClick={()=>{setSide('front');setSelected(null)}}>Frente</button><button className={side==='back'?'chosen':''} onClick={()=>{setSide('back');setSelected(null)}}>Verso</button></div>
-            <Sheet key={screen+side+document?.id} pages={pages} side={side} paper={getTemplate(template).paper} templateId={template} editable={screen==='editor'} selected={selected} onSelect={setSelected} onDrag={(layerId,x,y)=>updateLayer(layerId,{x,y})}/>
+            <Sheet key={screen+side+document?.id} pages={pages} side={side} paper={getTemplate(template).paper} templateId={template} backgroundUrl={currentBackgroundUrl} editable={screen==='editor'} selected={selected} onSelect={setSelected} onDrag={(layerId,x,y)=>updateLayer(layerId,{x,y})}/>
           </div>
         </div>
       </section> : null}

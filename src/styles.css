@@ -238,3 +238,74 @@ html{scroll-behavior:smooth}
 .handout-library .template-preview:has(.premium-indicator){border:1px solid #ae8b58;box-shadow:0 0 0 1px #ab824640,0 11px 21px #0008}
 .handout-library .template-preview:has(.premium-indicator) .template-card-info{background:linear-gradient(100deg,#3c3026,#242d22)}
 .handout-library .template-preview:has(.premium-indicator) .template-card-info strong{color:#f1dfbb}
+
+/* Document imports: the imported page is a secure raster background;
+ * all visible/UV text above it is independent and editable. */
+.document-imported-image{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:contain;object-position:center;z-index:1;pointer-events:none;user-select:none}
+.document-background-placeholder{position:absolute;inset:0;background:#d0c3a3;z-index:1}
+.document-sheet.has-imported-background{background:#e5ddc8}
+.document-sheet .document-imported-image+.document-layer{z-index:3}
+/* UV experience deliberately darkens the entire app. The document reader is
+ * brought above that blackout so its controls remain accessible. */
+body.paradocx-uv-mode::before{content:'';position:fixed;inset:0;z-index:90;
+  background:rgba(1,3,11,.89);pointer-events:none;backdrop-filter:blur(1px)}
+.document-frame.uv-running{position:relative;z-index:100;background:#060c1b;
+  padding:12px;border:1px solid #334f8a;border-radius:12px;
+  box-shadow:0 0 0 2px #071127,0 0 80px #234c9c49,0 20px 75px #000d}
+.document-frame.uv-running .sheet-toolbar{color:#c4d7ff;position:relative;z-index:102}
+.document-frame.uv-running .paper-help{color:#9cc0ed}
+.document-frame.uv-running .document-sheet{box-shadow:0 0 40px #3269b267,0 14px 35px #000b;cursor:crosshair}
+.document-frame.uv-running .uv-toggle{color:#d3e8ff;border-color:#537ac2;background:#142f61}
+.document-frame.uv-running .uv-toggle:hover{background:#244e9b}
+.document-sheet .uv-darkness{position:absolute;inset:0;z-index:6;pointer-events:none}
+.document-sheet .uv-blue-light{position:absolute;width:310px;height:310px;
+  transform:translate(-50%,-50%);z-index:7;pointer-events:none;border-radius:50%;
+  background:radial-gradient(circle,#3c62d575 0%,#1b3ca27a 35%,#10245b2a 67%,transparent 74%);
+  mix-blend-mode:screen}
+.document-sheet .uv-content.uv-revealed{z-index:8;pointer-events:none}
+.document-sheet .uv-content.uv-revealed .secret-text{color:#d5e4ff!important;
+  font-family:'Courier New',monospace;text-shadow:0 0 2px #ecf4ff,0 0 8px #70a5ff,
+  0 0 18px #2d75f9,0 0 34px #516cff;font-weight:800;letter-spacing:.4px}
+.document-sheet .uv-lens-ring{position:absolute;z-index:9;pointer-events:none;
+  border:1px solid #6fa7f49c;border-radius:50%;width:260px;height:260px;
+  transform:translate(-50%,-50%);box-shadow:inset 0 0 45px #4e7acb55,0 0 18px #3c70db5e}
+.document-sheet .uv-content.uv-editable{z-index:8}
+.document-sheet .uv-content.uv-editable .secret-text{color:#77519c!important}
+.document-frame .uv-toggle{font-weight:700;transition:background .2s,color .2s}
+.document-frame .sheet-toolbar{gap:14px;flex-wrap:wrap}
+.import-panel{border:1px solid #667552;background:linear-gradient(130deg,#303c2c,#1c2b23);
+  border-radius:9px;padding:15px;display:grid;gap:12px}
+.import-panel-title{font-size:11px;letter-spacing:1.4px;font-weight:800;color:#e4d09e}
+.import-panel p{font-size:12px;line-height:1.65;color:#c2d1bf;margin:0}
+.import-panel>small{font-size:10px;color:#aab8a3;line-height:1.6}
+.import-panel .file-input-label{display:grid;gap:9px;color:#f0d9a5;font-size:12px}
+.import-panel input[type="file"]{max-width:100%;font-size:11px;padding:9px;
+  color:#e6d8ae;background:#111d19;border:1px dashed #92966b;cursor:pointer}
+.import-panel input[type="file"]::file-selector-button{background:#d1b67a;color:#1c241c;
+  border:0;border-radius:5px;padding:8px;margin-right:10px;font-size:11px;font-weight:700;cursor:pointer}
+.import-panel .import-progress{color:#e6d59f}
+.import-panel .import-asset-choices{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.import-panel .import-asset-choices small{color:#a9d2af}
+.import-panel .compact{width:max-content;max-width:100%;white-space:normal;text-align:left}
+.asset-loading{font-size:11px;color:#b9c6ab;text-align:center;margin:9px 0}
+.document-frame.uv-running .paper-help{max-width:560px;text-align:center}
+@media(max-width:760px){
+ .document-frame.uv-running{padding:8px}
+ .document-sheet .uv-blue-light{width:260px;height:260px}
+ .document-sheet .uv-lens-ring{width:230px;height:230px}
+ .document-frame .sheet-toolbar{flex-wrap:wrap;justify-content:center}
+ .document-frame .sheet-toolbar span{font-size:9px}
+ .document-frame .uv-toggle{min-height:40px}
+}
+
+/* Replacing words in imported image/PDF backgrounds:
+   an editable, movable paper-tone patch goes below newly typed text. */
+.document-sheet .document-cover{position:absolute;z-index:2;cursor:grab;touch-action:none;
+  border:1px solid #463d2c15;box-shadow:0 1px 2px #0001;min-height:5px;user-select:none}
+.document-sheet .document-cover.is-selected{z-index:4;outline:2px dashed #87602b;
+  outline-offset:2px;box-shadow:0 0 0 3px #f1dfbba6}
+.editor-panel .layer-explanation{color:#c7c2aa;font-size:11px;line-height:1.6;margin:0}
+.editor-panel .layer-properties input[type="color"]{height:44px;cursor:pointer;padding:4px}
+.editor-panel .layer-actions button{font-size:10px;padding:9px 5px}
+.editor-panel .layer-list button{overflow:hidden;text-overflow:ellipsis}
