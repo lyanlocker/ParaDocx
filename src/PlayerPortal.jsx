@@ -1,28 +1,39 @@
 
 import React, {useEffect,useState} from 'react';
 import {templates} from './data/templates';
-import HandoutArt from './HandoutArt.jsx';
+import DocumentCanvas from './DocumentCanvas.jsx';
 
-function PlayerSheet({document,side}) {
-  const [uv,setUV]=useState(false);
-  const [point,setPoint]=useState({x:-100,y:-100});
+/** Loads each scan through token-validated POST; never exposes a public Storage URL. */
+function PlayerSheet({document,side,token}) {
+  const [background,setBackground]=useState('');
+  const [loading,setLoading]=useState(false);
+  const path=document.pages?.backgrounds?.[side];
+  useEffect(()=>{
+    let active=true;
+    let objectURL='';
+    setBackground('');
+    if(!path)return;
+    setLoading(true);
+    fetch(import.meta.env.VITE_SUPABASE_URL+'/functions/v1/player-access',{
+      method:'POST',cache:'no-store',
+      headers:{'Content-Type':'application/json','apikey':import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY},
+      body:JSON.stringify({action:'asset',token,document_id:document.id,side})
+    }).then(async response=>{
+      if(!response.ok)throw new Error('Imagem privada indisponível para este jogador.');
+      const blob=await response.blob();
+      if(!blob.type.startsWith('image/'))throw new Error('Formato não suportado.');
+      objectURL=URL.createObjectURL(blob);
+      if(active)setBackground(objectURL);
+      else URL.revokeObjectURL(objectURL);
+    }).catch(()=>{if(active)setBackground('');}).finally(()=>{if(active)setLoading(false)});
+    return ()=>{active=false;if(objectURL)URL.revokeObjectURL(objectURL);};
+  },[document.id,path,side,token]);
   const layout=templates.find(t=>t.id===document.template)||templates[0];
-  const layers=Array.isArray(document.pages?.[side])?document.pages[side]:[];
-  const mask=uv?'radial-gradient(circle 110px at '+point.x+'% '+point.y+'%, black 12%,transparent 100%)':'linear-gradient(transparent,transparent)';
-  const draw=l=><div key={l.id}
-    className={'document-layer layer-'+(l.style||'body').replace(/[^a-z]/g,'')+' '+(l.kind==='uv'?'secret-text':'')}
-    style={{left:l.x+'%',top:l.y+'%',width:(l.width||70)+'%',fontSize:'clamp(10px, '+(Number(l.fontSize||18)/5).toFixed(2)+'vw, '+Number(l.fontSize||18)+'px)'}}>
-    {l.text}</div>;
-  return <div className="document-frame">
-    <div className="sheet-toolbar"><span>DOCUMENTO / {side==='front'?'FRENTE':'VERSO'}</span><button className={'uv-toggle '+(uv?'illuminated':'')} onClick={()=>setUV(v=>!v)}>{uv?'☼ Apagar luz negra':'☼ Ligar luz negra'}</button></div>
-    <div className={'document-sheet sheet-'+layout.paper} onPointerMove={e=>{const b=e.currentTarget.getBoundingClientRect();setPoint({x:(e.clientX-b.left)/b.width*100,y:(e.clientY-b.top)/b.height*100})}} onPointerDown={e=>{const b=e.currentTarget.getBoundingClientRect();setPoint({x:(e.clientX-b.left)/b.width*100,y:(e.clientY-b.top)/b.height*100})}} onPointerLeave={()=>setPoint({x:-100,y:-100})}>
-      <div className="paper-grain"/><HandoutArt templateId={document.template} side={side}/>
-      {layers.filter(l=>l.kind!=='uv').map(draw)}
-      <div className="uv-content" style={{WebkitMaskImage:mask,maskImage:mask}}>{layers.filter(l=>l.kind==='uv').map(draw)}</div>
-      {uv&&<div className="torch" style={{left:point.x+'%',top:point.y+'%'}}/>}
-    </div>
-    <small className="paper-help">Mova a lanterna sobre a folha para investigar mensagens escondidas.</small>
-  </div>;
+  return <>
+    {loading&&<p className="asset-loading" role="status">Carregando imagem privada…</p>}
+    <DocumentCanvas key={document.id+'-'+side} pages={document.pages} side={side}
+      templateId={document.template} paper={layout.paper} backgroundUrl={background}/>
+  </>;
 }
 const call = async (token,action,other={}) => {
   const response=await fetch(import.meta.env.VITE_SUPABASE_URL+'/functions/v1/player-access',{
@@ -75,7 +86,7 @@ export default function PlayerPortal({token}){
         {document ? <div className="player-reader">
           <div className="reader-nav"><button className="outline" onClick={()=>{setSelected(null);setTarget('')}}>← Meu inventário</button><h2>{document.title}</h2></div>
           <div className="page-switch"><button className={side==='front'?'chosen':''} onClick={()=>setSide('front')}>Frente</button><button className={side==='back'?'chosen':''} onClick={()=>setSide('back')}>Verso</button></div>
-          <PlayerSheet document={document} side={side}/>
+          <PlayerSheet document={document} side={side} token={token}/>
           {state.players.length>0&&<div className="reader-transfer"><h3>Entregar documento</h3><p>Ao entregar, este documento sairá do seu inventário e aparecerá para outro investigador.</p><div className="transfer-inputs"><select value={target} onChange={e=>setTarget(e.target.value)}><option value="">Escolher destinatário</option>{state.players.map(p=><option key={p.id} value={p.id}>{p.display_name}</option>)}</select><button className="primary" disabled={busy||!target} onClick={()=>transfer(document)}>{busy?'Entregando...':'Transferir →'}</button></div></div>}
         </div> :
         <>
