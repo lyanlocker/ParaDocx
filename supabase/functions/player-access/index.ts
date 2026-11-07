@@ -47,6 +47,32 @@ Deno.serve(async (req) => {
       .eq('token_hash',tokenHash).eq('enabled',true).maybeSingle();
     if (seatErr) throw seatErr;
     if (!seat) return json({error:'Este link foi revogado ou é inválido'},401,origin);
+    if (body.action==='asset') {
+      if (typeof body.document_id !== 'string' || !uuid.test(body.document_id) ||
+          (body.side !== 'front' && body.side !== 'back')) {
+        return json({error:'Documento ou lado inválido'},400,origin);
+      }
+      const {data:doc,error:docError}=await admin.from('documents')
+        .select('id,campaign_id,holder_seat_id,is_published,pages')
+        .eq('id',body.document_id).eq('campaign_id',seat.campaign_id)
+        .eq('holder_seat_id',seat.id).eq('is_published',true).maybeSingle();
+      if (docError) throw docError;
+      if (!doc) return json({error:'Documento indisponível para este jogador'},403,origin);
+      const path=doc.pages?.backgrounds?.[body.side];
+      if (typeof path !== 'string' || !path.startsWith(seat.campaign_id+'/') ||
+          !/^[a-f0-9-]{36}\/[a-f0-9-]{36}\.(webp|png|jpg)$/i.test(path)) {
+        return json({error:'Esta face não tem arquivo importado'},404,origin);
+      }
+      const downloaded=await admin.storage.from('handout-assets').download(path);
+      if (downloaded.error || !downloaded.data) return json({error:'Imagem indisponível'},404,origin);
+      const type=downloaded.data.type;
+      if(!['image/webp','image/jpeg','image/png'].includes(type))
+        return json({error:'Formato de imagem inválido'},415,origin);
+      return new Response(downloaded.data,{status:200,headers:{
+        ...headers(origin),'Content-Type':type,'X-Content-Type-Options':'nosniff',
+        'Content-Disposition':'inline','Cache-Control':'no-store, private'
+      }});
+    }
     if (body.action==='transfer') {
       if (typeof body.document_id!=='string'||!uuid.test(body.document_id)||
           typeof body.recipient_id!=='string'||!uuid.test(body.recipient_id)) {
