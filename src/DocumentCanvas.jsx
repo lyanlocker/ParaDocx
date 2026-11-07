@@ -81,7 +81,9 @@ export default function DocumentCanvas({
       {backgroundUrl
         ?<img className="document-imported-image" src={backgroundUrl}
           alt={'Documento importado — '+(side==='front'?'frente':'verso')} draggable="false"/>
-        :<HandoutArt templateId={templateId} side={side}/>}
+        :pages?.backgrounds?.[side]
+          ?<div className="document-background-placeholder" aria-hidden="true"/>
+          :<HandoutArt templateId={templateId} side={side}/>}
       {layers.filter(l=>l.kind!=='uv').map(layerNode)}
       {uv && <><div className="uv-darkness" style={{background:darkness}}/>
         <div className="uv-blue-light" style={{left:point.x+'%',top:point.y+'%'}}/></>}
