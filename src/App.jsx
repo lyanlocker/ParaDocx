@@ -4,6 +4,7 @@ import { supabase as db } from './lib/supabase';
 import { templates, newPages, templateCategories } from './data/templates';
 import HandoutArt from './HandoutArt.jsx';
 import DocumentCanvas from './DocumentCanvas.jsx';
+import LayerProperties from './LayerProperties.jsx';
 import {prepareImport, uploadExtension, INPUT_ACCEPT} from './lib/importHandout.js';
 import PlayerPortal from './PlayerPortal.jsx';
 import MasterSetup from './MasterSetup.jsx';
@@ -197,7 +198,9 @@ export default function App() {
     setPages(prev => ({...prev,[side]:(prev[side] || []).map(l=>l.id===layerId?{...l,...field}:l)}));
   }
   function addLayer(kind) {
-    const l = {id:id(),kind,style:kind==='uv'?'secret':'body',text:kind==='uv'?'Mensagem invisível':'Novo texto',x:14,y:25,width:74,fontSize:20};
+    const l=kind==='cover'
+      ?{id:id(),kind:'cover',x:14,y:25,width:74,height:10,color:'#eee1c7',opacity:1}
+      :{id:id(),kind,style:kind==='uv'?'secret':'body',text:kind==='uv'?'Mensagem invisível':'Novo texto',x:14,y:25,width:74,fontSize:20};
     setPages(p=>({...p,[side]:[...(p[side]||[]),l]}));setSelected(l.id);setMode('advanced');
   }
   function deleteLayer() {
@@ -403,13 +406,11 @@ export default function App() {
               {extractedPdfText?.[side]&&<button type="button" className="outline compact" onClick={addExtractedPdfText}>
                 + Extrair texto do PDF para uma camada editável
               </button>}
-              <small>PNG, JPG, WEBP (lado selecionado), PDF (páginas 1 e 2), TXT e MD • até 15 MB. A arte original do PDF/imagem não é editável diretamente; você edita as camadas adicionadas.</small>
+              <small>PNG, JPG, WEBP (lado selecionado), PDF (páginas 1 e 2), TXT e MD • até 15 MB. A arte original do PDF/imagem vira fundo: use uma tarja para cobrir texto antigo e escreva outro por cima, além de adicionar pistas UV.</small>
             </div><div className="editor-template-info">{getTemplate(template).icon} {getTemplate(template).description}</div><label>Título<input maxLength="150" value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Modelo<select value={template} onChange={e=>chooseTemplate(e.target.value)}>{templates.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
             <div className="mode-switch"><button className={mode==='quick'?'active':''} onClick={()=>setMode('quick')}>Campos rápidos</button><button className={mode==='advanced'?'active':''} onClick={()=>setMode('advanced')}>Camadas livres</button></div>
-            {mode==='quick'?<div className="field-list">{(pages[side]||[]).map((l,i)=><label key={l.id}>{l.kind==='uv'?'✧ Mensagem secreta':'Texto '+(i+1)}<textarea rows="3" value={l.text} onChange={e=>updateLayer(l.id,{text:e.target.value})}/></label>)}<button className="outline" onClick={()=>addLayer('normal')}>+ Adicionar texto</button><button className="outline" onClick={()=>addLayer('uv')}>+ Adicionar segredo UV</button></div>:<><div className="layer-actions"><button onClick={()=>addLayer('normal')}>+ Texto</button><button onClick={()=>addLayer('uv')}>+ Luz negra</button></div><div className="layer-list">{(pages[side]||[]).map(l=><button className={selected===l.id?'selected':''} key={l.id} onClick={()=>setSelected(l.id)}>{l.kind==='uv'?'✧':'☰'} {l.text.slice(0,27)||'Texto vazio'}</button>)}</div>{selectedLayer&&<div className="layer-properties"><strong>Configurar camada</strong><textarea rows="4" value={selectedLayer.text} onChange={e=>updateLayer(selected,{text:e.target.value})}/><label>Tamanho da fonte: {selectedLayer.fontSize}<input type="range" min="10" max="44" value={selectedLayer.fontSize} onChange={e=>updateLayer(selected,{fontSize:Number(e.target.value)})}/></label><label>Largura: {selectedLayer.width}%<input type="range" min="20" max="95" value={selectedLayer.width} onChange={e=>updateLayer(selected,{width:Number(e.target.value)})}/></label>
-                <div className="position-row"><label>Horizontal (%)<input type="number" min="0" max="94" value={Math.round(selectedLayer.x)} onChange={e=>updateLayer(selected,{x:Math.max(0,Math.min(94,Number(e.target.value)||0))})}/></label><label>Vertical (%)<input type="number" min="0" max="94" value={Math.round(selectedLayer.y)} onChange={e=>updateLayer(selected,{y:Math.max(0,Math.min(94,Number(e.target.value)||0))})}/></label></div>
-                <label>Estilo<select value={selectedLayer.style||'body'} onChange={e=>updateLayer(selected,{style:e.target.value})}>{[['body','Texto comum'],['script','Manuscrito'],['heading','Cabeçalho'],['headline','Manchete'],['mono','Máquina de escrever'],['stamp','Carimbo'],['symbol','Símbolos'],['smallcaps','Letras pequenas']].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
-                <button className="danger" onClick={deleteLayer}>Excluir camada ×</button></div>}</>}
+            {mode==='quick'?<div className="field-list">{(pages[side]||[]).filter(l=>l.kind!=='cover').map((l,i)=><label key={l.id}>{l.kind==='uv'?'✧ Mensagem secreta':'Texto '+(i+1)}<textarea rows="3" value={l.text} onChange={e=>updateLayer(l.id,{text:e.target.value})}/></label>)}<button className="outline" onClick={()=>addLayer('normal')}>+ Adicionar texto</button><button className="outline" onClick={()=>addLayer('uv')}>+ Adicionar segredo UV</button><button className="outline" onClick={()=>addLayer('cover')}>+ Tarja para substituir texto</button></div>:<><div className="layer-actions"><button onClick={()=>addLayer('normal')}>+ Texto</button><button onClick={()=>addLayer('uv')}>+ Luz negra</button><button onClick={()=>addLayer('cover')}>+ Tarja</button></div><div className="layer-list">{(pages[side]||[]).map(l=><button className={selected===l.id?'selected':''} key={l.id} onClick={()=>setSelected(l.id)}>{l.kind==='cover'?'▧':l.kind==='uv'?'✧':'☰'} {l.kind==='cover'?'Tarja de substituição':(l.text||'').slice(0,27)||'Texto vazio'}</button>)}</div>{selectedLayer&&<LayerProperties layer={selectedLayer}
+              onChange={fields=>updateLayer(selected,fields)} onDelete={deleteLayer}/>}</>}
             <p className="editor-hint">Modo rápido para preencher. Modo livre para arrastar, posicionar, mudar estilos e criar textos UV. Você pode alternar entre frente e verso acima da folha.</p>
           </aside>}
           <div className="editor-stage"><div className="page-switch"><button className={side==='front'?'chosen':''} onClick={()=>{setSide('front');setSelected(null)}}>Frente</button><button className={side==='back'?'chosen':''} onClick={()=>{setSide('back');setSelected(null)}}>Verso</button></div>
