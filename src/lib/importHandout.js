@@ -12,8 +12,12 @@ export function validateImport(file) {
   const ext=String(file.name).split('.').pop().toLowerCase();
   const kind=ext==='pdf'?'pdf':['txt','md'].includes(ext)?'text':['png','jpg','jpeg','webp'].includes(ext)?'image':null;
   if(!kind)throw new Error('Formato não aceito. Use PDF, PNG, JPG, WEBP, TXT ou MD.');
-  if(file.type && !IMPORT_TYPES.includes(file.type) &&
-     !(kind==='text'&&file.type==='application/octet-stream')) {
+  const allowedByKind={
+    image:['image/png','image/jpeg','image/webp'],
+    pdf:['application/pdf'],
+    text:['text/plain','text/markdown','application/octet-stream']
+  };
+  if(file.type && !allowedByKind[kind].includes(file.type)) {
     throw new Error('O tipo do arquivo não corresponde ao formato permitido.');
   }
   return kind;
