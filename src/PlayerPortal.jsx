@@ -7,11 +7,12 @@ import DocumentCanvas from './DocumentCanvas.jsx';
 function PlayerSheet({document,side,token}) {
   const [background,setBackground]=useState('');
   const [loading,setLoading]=useState(false);
+  const [assetError,setAssetError]=useState('');
   const path=document.pages?.backgrounds?.[side];
   useEffect(()=>{
     let active=true;
     let objectURL='';
-    setBackground('');
+    setBackground('');setAssetError('');
     if(!path)return;
     setLoading(true);
     fetch(import.meta.env.VITE_SUPABASE_URL+'/functions/v1/player-access',{
@@ -25,12 +26,14 @@ function PlayerSheet({document,side,token}) {
       objectURL=URL.createObjectURL(blob);
       if(active)setBackground(objectURL);
       else URL.revokeObjectURL(objectURL);
-    }).catch(()=>{if(active)setBackground('');}).finally(()=>{if(active)setLoading(false)});
+    }).catch(error=>{if(active){setBackground('');setAssetError(error.message||'Imagem não disponível.');}})
+      .finally(()=>{if(active)setLoading(false)});
     return ()=>{active=false;if(objectURL)URL.revokeObjectURL(objectURL);};
   },[document.id,path,side,token]);
   const layout=templates.find(t=>t.id===document.template)||templates[0];
   return <>
     {loading&&<p className="asset-loading" role="status">Carregando imagem privada…</p>}
+    {assetError&&<p className="asset-loading" role="alert">{assetError}</p>}
     <DocumentCanvas key={document.id+'-'+side} pages={document.pages} side={side}
       templateId={document.template} paper={layout.paper} backgroundUrl={background}/>
   </>;
