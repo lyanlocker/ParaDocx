@@ -5,6 +5,7 @@ import occultIllustration from './art/occult.js';
 import labIllustration from './art/lab.js';
 import blueprintIllustration from './art/blueprint.js';
 import newspaperPhotograph from './art/newspaper_photo.js';
+import CraftedArt, {craftedTemplateIds} from './art/crafted.jsx';
 
 const premiumIllustrations = {
   letter:letterIllustration,report:dossierIllustration,dossier:dossierIllustration,
@@ -62,6 +63,9 @@ const customTheme={
 export default function HandoutArt({templateId='letter',side='front',preview=false}) {
   const uid=useId().replaceAll(':','');
   const kind=heroThemes[templateId]||customTheme[templateId]||'letter';
+  if (craftedTemplateIds[templateId]) {
+    return <CraftedArt templateId={templateId} side={side}/>;
+  }
   const front=side!=='back';
   const sc=schemes[kind]||schemes.letter;
   const ink=sc.ink, accent=sc.accent;

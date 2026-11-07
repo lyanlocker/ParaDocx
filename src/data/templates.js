@@ -1,5 +1,7 @@
+import {craftedTemplates} from './craftedTemplates';
+
 /** Modelos originais ParaDocx. Coordenadas em percentuais (0-100). */
-export const templates = [
+const baseTemplates = [
   {
     "id": "letter",
     "name": "Carta do Crepúsculo",
@@ -2604,6 +2606,8 @@ export const templates = [
 ];
 
 /** Cria cópias independentes para edição; o modelo em branco começa completamente vazio. */
+export const templates = [...baseTemplates, ...craftedTemplates];
+
 export function newPages(template) {
   const duplicate = (layers,side) => layers.map((layer,index)=>({...layer,id:`${template.id}-${side}-${index}-${Math.random().toString(36).slice(2,10)}`}));
   return {front:duplicate([...(template.layers||[]),...(template.secrets||[])],'front'),back:duplicate(template.backLayers||[],'back')};

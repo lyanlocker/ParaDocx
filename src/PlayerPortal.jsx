@@ -2,6 +2,22 @@
 import React, {useEffect,useState} from 'react';
 import {templates} from './data/templates';
 import DocumentCanvas from './DocumentCanvas.jsx';
+import HandoutArt from './HandoutArt.jsx';
+
+/** Miniatura fiel do documento: arte + textos na mesma escala da folha real. */
+function DocPreview({document}) {
+  const layout=templates.find(t=>t.id===document.template)||templates[0];
+  const layers=Array.isArray(document.pages?.front)?document.pages.front:[];
+  return <div className={'player-doc-paper sheet-'+(layout.paper||'letter')}>
+    <HandoutArt templateId={document.template} side="front"/>
+    {layers.filter(l=>l.kind!=='uv'&&l.kind!=='cover').map(layer=>(
+      <span key={layer.id} className={'doc-preview-layer layer-'+String(layer.style||'body').replace(/[^a-z]/g,'')}
+        style={{left:(Number(layer.x)||0)+'%',top:(Number(layer.y)||0)+'%',
+          width:(Number(layer.width)||74)+'%',
+          fontSize:Math.max(4,Math.min(16,(Number(layer.fontSize)||18)*0.32))}}>{layer.text}</span>
+    ))}
+  </div>;
+}
 
 /** Loads each scan through token-validated POST; never exposes a public Storage URL. */
 function PlayerSheet({document,side,token}) {
@@ -94,7 +110,7 @@ export default function PlayerPortal({token}){
         </div> :
         <>
           <div className="section-heading"><h2>Meu inventário</h2><small>{state.documents.length} EVIDÊNCIAS</small></div>
-          <div className="player-doc-grid">{state.documents.map(d=><button className="player-doc-card" key={d.id} onClick={()=>{setSelected(d.id);setSide('front')}}><div className={'player-doc-paper '+(templates.find(t=>t.id===d.template)?.paper||'letter')}><span>{templates.find(t=>t.id===d.template)?.icon||'▤'}</span></div><div className="player-doc-info"><span>DOCUMENTO ENCONTRADO</span><h3>{d.title}</h3><small>EXAMINAR DOCUMENTO ↗</small></div></button>)}</div>
+          <div className="player-doc-grid">{state.documents.map(d=><button className="player-doc-card" key={d.id} onClick={()=>{setSelected(d.id);setSide('front')}}><DocPreview document={d}/><div className="player-doc-info"><span>DOCUMENTO ENCONTRADO</span><h3>{d.title}</h3><small>EXAMINAR DOCUMENTO ↗</small></div></button>)}</div>
           {state.documents.length===0&&<div className="empty">Seu inventário está vazio. Aguarde o mestre entregar uma pista.</div>}
           <div className="portal-hint">Seu acesso é individual. Guarde este link: ele funciona como a chave do seu arquivo. Se precisar de outro, peça ao mestre para gerar um novo.</div>
         </>}

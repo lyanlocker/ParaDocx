@@ -309,3 +309,47 @@ body.paradocx-uv-mode::before{content:'';position:fixed;inset:0;z-index:90;
 .editor-panel .layer-properties input[type="color"]{height:44px;cursor:pointer;padding:4px}
 .editor-panel .layer-actions button{font-size:10px;padding:9px 5px}
 .editor-panel .layer-list button{overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- Artefatos físicos (objetos, não folhas) ---------- */
+.document-sheet .handout-art.crafted-art{position:absolute;inset:0;width:100%;height:100%;
+  z-index:1;pointer-events:none;display:block}
+.document-sheet.sheet-notebook{background:#2a1a12}
+.document-sheet.sheet-terminal{background:#0b0d0c}
+.document-sheet.sheet-bottle{background:#12180f}
+.document-sheet.sheet-polaroid{background:#1b1815}
+.document-sheet.sheet-cassette{background:#171412}
+.document-sheet.sheet-microfiche{background:#0f1216}
+.document-sheet.sheet-tarot{background:#0d0b10}
+.document-sheet.sheet-badge{background:#191b1e}
+.document-sheet.sheet-terminal .document-layer{color:#9ff3bd;text-shadow:0 0 10px #2b7f4a66}
+.document-sheet.sheet-terminal .uv-content .document-layer{color:#cfe6ff}
+.document-sheet.sheet-polaroid .document-layer{color:#4a4238}
+.document-sheet.sheet-bottle .document-layer{color:#3d3324}
+.document-sheet.sheet-notebook .document-layer{color:#e9dfc4}
+.document-sheet.sheet-badge .document-layer{color:#2b3038}
+.document-sheet.sheet-tarot .document-layer{color:#e0c98a}
+.document-sheet.sheet-cassette .document-layer{color:#e6dcc0}
+.document-sheet.sheet-microfiche .document-layer{color:#3a3830}
+
+/* ---------- Cartões do inventário do jogador ---------- */
+.player-doc-card{padding:0;overflow:hidden;display:flex;flex-direction:column;
+  text-align:left;background:#1e241d;border:1px solid #3d4a3a;border-radius:12px;
+  transition:transform .22s,box-shadow .22s,border-color .22s;cursor:pointer}
+.player-doc-card:hover{transform:translateY(-4px);border-color:#d6b77a;
+  box-shadow:0 16px 30px #0009}
+.player-doc-paper{position:relative;width:100%;aspect-ratio:800/1132;overflow:hidden;
+  background:#111;border-bottom:1px solid #0006}
+.player-doc-paper .handout-art{position:absolute;inset:0;width:100%;height:100%}
+.player-doc-paper .paper-grain{position:absolute;inset:0;opacity:.08}
+.player-doc-card:hover .player-doc-paper{filter:brightness(1.06)}
+.player-doc-info{padding:14px 15px 16px}
+.player-doc-info>span{font-size:9px;letter-spacing:1.6px;color:#8fa37f;font-weight:700}
+.player-doc-info h3{margin:6px 0 8px;font:600 15px/1.3 'DM Sans',sans-serif;color:#f1e6d1}
+.player-doc-info small{font-size:10px;letter-spacing:1.4px;color:#d6b77a;font-weight:700}
+.player-doc-grid{gap:22px}
+.doc-preview-layer{position:absolute;line-height:1.25;opacity:.9;overflow:hidden;
+  color:#2a2118;pointer-events:none}
+.player-doc-paper .layer-masthead{font-weight:800;letter-spacing:.04em}
+.player-doc-paper .layer-script{font-family:'Special Elite',cursive}
+.player-doc-paper .layer-mono{font-family:'Courier New',monospace}
+.player-doc-paper .layer-label,.player-doc-paper .layer-smallcaps{letter-spacing:.06em}
