@@ -79,7 +79,7 @@ export default function DocumentCanvas({
         {uv?'◉ Desligar lanterna UV':editable?'◉ Testar luz UV':'◉ Ativar lanterna UV'}
       </button>
     </div>
-    <div className={'document-sheet sheet-'+paper+' '+(backgroundUrl?'has-imported-background':'')}
+    <div className={'document-sheet sheet-'+paper+' side-'+side+' '+(backgroundUrl?'has-imported-background':'')}
       ref={sheetRef}
       onPointerDown={e=>{if(uv){e.currentTarget.setPointerCapture(e.pointerId);updatePoint(e);}}}
       onPointerMove={updatePoint} onPointerUp={endInteraction} onPointerCancel={endInteraction}

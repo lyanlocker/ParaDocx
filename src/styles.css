@@ -313,6 +313,37 @@ body.paradocx-uv-mode::before{content:'';position:fixed;inset:0;z-index:90;
 /* ---------- Artefatos físicos (objetos, não folhas) ---------- */
 .document-sheet .handout-art.crafted-art{position:absolute;inset:0;width:100%;height:100%;
   z-index:1;pointer-events:none;display:block}
+/* Artefatos: cada objeto tem seu proprio material, luz e cor de tinta. */
+.document-sheet.sheet-notebook{background:#241509}
+.document-sheet.sheet-computer{background:#0a0c0b}
+.document-sheet.sheet-bottle{background:#0e140c}
+.document-sheet.sheet-polaroid{background:#141110}
+.document-sheet.sheet-cassette{background:#14110f}
+.document-sheet.sheet-microfiche{background:#0d1013}
+.document-sheet.sheet-tarot{background:#171108}
+.document-sheet.sheet-badge{background:#161513}
+.document-sheet.sheet-notebook .document-layer{color:#e8dcc0}
+.document-sheet.sheet-computer .document-layer{color:#9ff3bd;text-shadow:0 0 9px #2b7f4a55}
+.document-sheet.sheet-computer .uv-content .document-layer{color:#7ee0ff;text-shadow:0 0 12px #2e6f9b77}
+.document-sheet.sheet-bottle .document-layer{color:#f0e3c8}
+.document-sheet.sheet-polaroid .document-layer{color:#3a342c}
+.document-sheet.sheet-cassette .document-layer{color:#efe6d2}
+.document-sheet.sheet-microfiche .document-layer{color:#d6e2ea}
+.document-sheet.sheet-tarot .document-layer{color:#4a3a1c}
+.document-sheet.sheet-badge .document-layer{color:#20242a}
+.document-sheet.sheet-notebook .layer-script{font-family:'Special Elite',cursive}
+.document-sheet.sheet-polaroid .layer-script,.document-sheet.sheet-badge .layer-script{font-family:'Special Elite',cursive}
+.document-sheet.sheet-computer .layer-mono,.document-sheet.sheet-microfiche .layer-mono{font-family:'Courier New',monospace}
+.document-sheet.sheet-tarot .layer-masthead{letter-spacing:.2em}
+.document-sheet.sheet-badge .layer-masthead{letter-spacing:.16em}
+.player-doc-paper.sheet-notebook .doc-preview-layer{color:#e8dcc0}
+.player-doc-paper.sheet-computer .doc-preview-layer{color:#9ff3bd}
+.player-doc-paper.sheet-bottle .doc-preview-layer{color:#f0e3c8}
+.player-doc-paper.sheet-polaroid .doc-preview-layer{color:#3a342c}
+.player-doc-paper.sheet-cassette .doc-preview-layer{color:#efe6d2}
+.player-doc-paper.sheet-microfiche .doc-preview-layer{color:#d6e2ea}
+.player-doc-paper.sheet-tarot .doc-preview-layer{color:#4a3a1c}
+.player-doc-paper.sheet-badge .doc-preview-layer{color:#20242a}
 .document-sheet.sheet-notebook{background:#2a1a12}
 .document-sheet.sheet-terminal{background:#0b0d0c}
 .document-sheet.sheet-bottle{background:#12180f}
@@ -321,6 +352,35 @@ body.paradocx-uv-mode::before{content:'';position:fixed;inset:0;z-index:90;
 .document-sheet.sheet-microfiche{background:#0f1216}
 .document-sheet.sheet-tarot{background:#0d0b10}
 .document-sheet.sheet-badge{background:#191b1e}
+/* frente e verso do mesmo objeto: o texto acompanha o desenho */
+.document-sheet.sheet-notebook.side-back .document-layer{color:#3c3427}
+.document-sheet.sheet-notebook.side-back .layer-script{color:#4a3a24}
+.document-sheet.sheet-polaroid.side-back .document-layer{color:#5a5145}
+.document-sheet.sheet-terminal.side-back .document-layer{color:#c8b487}
+.document-sheet.sheet-cassette.side-back .document-layer{color:#cbbfa2}
+.document-sheet.sheet-microfiche.side-back .document-layer{color:#a8b0bd}
+.document-sheet.sheet-tarot.side-back .document-layer{color:#b39a63}
+.document-sheet.sheet-badge.side-back .document-layer{color:#4c4f56}
+.document-sheet.sheet-bottle.side-back .document-layer{color:#5c4c31}
+/* fonte dos artefatos */
+.document-sheet.sheet-notebook .layer-script,.player-doc-paper.sheet-notebook .layer-script{font-family:'Special Elite',cursive}
+.document-sheet.sheet-notebook .layer-masthead,.player-doc-paper.sheet-notebook .layer-masthead{letter-spacing:.22em}
+.document-sheet.sheet-terminal .layer-mono,.player-doc-paper.sheet-terminal .layer-mono{font-family:'Courier New',monospace}
+.document-sheet.sheet-cassette .layer-mono,.player-doc-paper.sheet-cassette .layer-mono{font-family:'Courier New',monospace}
+.document-sheet.sheet-microfiche .layer-mono,.player-doc-paper.sheet-microfiche .layer-mono{font-family:'Courier New',monospace}
+.document-sheet.sheet-tarot .layer-smallcaps,.player-doc-paper.sheet-tarot .layer-smallcaps{letter-spacing:.16em}
+.document-sheet.sheet-badge .layer-masthead,.player-doc-paper.sheet-badge .layer-masthead{letter-spacing:.2em}
+/* crachá: área carimbada e faixa */
+.document-sheet.sheet-badge .document-layer{text-shadow:0 1px 0 #fff6}
+.player-doc-paper.sheet-terminal .doc-preview-layer{color:#9ff3bd}
+.player-doc-paper.sheet-notebook .doc-preview-layer{color:#e9dfc4}
+.player-doc-paper.sheet-badge .doc-preview-layer{color:#2b3038}
+.player-doc-paper.sheet-tarot .doc-preview-layer{color:#e0c98a}
+.player-doc-paper.sheet-polaroid .doc-preview-layer{color:#4a4238}
+.player-doc-paper.sheet-bottle .doc-preview-layer{color:#3d3324}
+.player-doc-paper.sheet-cassette .doc-preview-layer{color:#e6dcc0}
+.player-doc-paper.sheet-microfiche .doc-preview-layer{color:#3a3830}
+.player-doc-paper .doc-preview-layer{text-shadow:0 1px 2px #0006}
 .document-sheet.sheet-terminal .document-layer{color:#9ff3bd;text-shadow:0 0 10px #2b7f4a66}
 .document-sheet.sheet-terminal .uv-content .document-layer{color:#cfe6ff}
 .document-sheet.sheet-polaroid .document-layer{color:#4a4238}
