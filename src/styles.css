@@ -298,3 +298,14 @@ body.paradocx-uv-mode::before{content:'';position:fixed;inset:0;z-index:90;
  .document-frame .sheet-toolbar span{font-size:9px}
  .document-frame .uv-toggle{min-height:40px}
 }
+
+/* Replacing words in imported image/PDF backgrounds:
+   an editable, movable paper-tone patch goes below newly typed text. */
+.document-sheet .document-cover{position:absolute;z-index:2;cursor:grab;touch-action:none;
+  border:1px solid #463d2c15;box-shadow:0 1px 2px #0001;min-height:5px;user-select:none}
+.document-sheet .document-cover.is-selected{z-index:4;outline:2px dashed #87602b;
+  outline-offset:2px;box-shadow:0 0 0 3px #f1dfbba6}
+.editor-panel .layer-explanation{color:#c7c2aa;font-size:11px;line-height:1.6;margin:0}
+.editor-panel .layer-properties input[type="color"]{height:44px;cursor:pointer;padding:4px}
+.editor-panel .layer-actions button{font-size:10px;padding:9px 5px}
+.editor-panel .layer-list button{overflow:hidden;text-overflow:ellipsis}
