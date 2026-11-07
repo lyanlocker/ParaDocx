@@ -204,8 +204,13 @@ export default function App() {
     setPages(p=>({...p,[side]:p[side].filter(l=>l.id!==selected)}));setSelected(null);
   }
   function chooseTemplate(key) {
-    const p = getTemplate(key);
-    if (((pages.front||[]).length || (pages.back||[]).length) && !window.confirm('Trocar o modelo vai substituir os textos atuais. Continuar?')) return;
+    const p=getTemplate(key);
+    const hasContent=(pages.front||[]).length||(pages.back||[]).length||
+      Object.values(pages.backgrounds||{}).some(Boolean)||
+      Object.values(pendingAssets).some(Boolean);
+    if(hasContent&&!window.confirm('Trocar o modelo substituirá os textos e fundos importados deste rascunho. Continuar?'))return;
+    Object.values(pendingAssets).forEach(asset=>asset?.previewUrl&&URL.revokeObjectURL(asset.previewUrl));
+    setPendingAssets({});setExtractedPdfText({});setSignedBackgroundUrl('');
     setTemplate(key);setPages(newPages(p));setSelected(null);setMode('quick');
   }
   async function importSelectedFile(event) {
@@ -398,7 +403,7 @@ export default function App() {
               {extractedPdfText?.[side]&&<button type="button" className="outline compact" onClick={addExtractedPdfText}>
                 + Extrair texto do PDF para uma camada editável
               </button>}
-              <small>PNG, JPG, WEBP, PDF (páginas 1 e 2), TXT e MD • até 15 MB. A arte original do PDF/imagem não é editável diretamente; você edita as camadas adicionadas.</small>
+              <small>PNG, JPG, WEBP (lado selecionado), PDF (páginas 1 e 2), TXT e MD • até 15 MB. A arte original do PDF/imagem não é editável diretamente; você edita as camadas adicionadas.</small>
             </div><div className="editor-template-info">{getTemplate(template).icon} {getTemplate(template).description}</div><label>Título<input maxLength="150" value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Modelo<select value={template} onChange={e=>chooseTemplate(e.target.value)}>{templates.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
             <div className="mode-switch"><button className={mode==='quick'?'active':''} onClick={()=>setMode('quick')}>Campos rápidos</button><button className={mode==='advanced'?'active':''} onClick={()=>setMode('advanced')}>Camadas livres</button></div>
             {mode==='quick'?<div className="field-list">{(pages[side]||[]).map((l,i)=><label key={l.id}>{l.kind==='uv'?'✧ Mensagem secreta':'Texto '+(i+1)}<textarea rows="3" value={l.text} onChange={e=>updateLayer(l.id,{text:e.target.value})}/></label>)}<button className="outline" onClick={()=>addLayer('normal')}>+ Adicionar texto</button><button className="outline" onClick={()=>addLayer('uv')}>+ Adicionar segredo UV</button></div>:<><div className="layer-actions"><button onClick={()=>addLayer('normal')}>+ Texto</button><button onClick={()=>addLayer('uv')}>+ Luz negra</button></div><div className="layer-list">{(pages[side]||[]).map(l=><button className={selected===l.id?'selected':''} key={l.id} onClick={()=>setSelected(l.id)}>{l.kind==='uv'?'✧':'☰'} {l.text.slice(0,27)||'Texto vazio'}</button>)}</div>{selectedLayer&&<div className="layer-properties"><strong>Configurar camada</strong><textarea rows="4" value={selectedLayer.text} onChange={e=>updateLayer(selected,{text:e.target.value})}/><label>Tamanho da fonte: {selectedLayer.fontSize}<input type="range" min="10" max="44" value={selectedLayer.fontSize} onChange={e=>updateLayer(selected,{fontSize:Number(e.target.value)})}/></label><label>Largura: {selectedLayer.width}%<input type="range" min="20" max="95" value={selectedLayer.width} onChange={e=>updateLayer(selected,{width:Number(e.target.value)})}/></label>
