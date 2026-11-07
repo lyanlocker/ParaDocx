@@ -47,6 +47,13 @@ export default function DocumentCanvas({
   }
   function endInteraction(){dragRef.current=null;}
   const layerNode=layer=>{
+    if(layer.kind==='cover')return <div key={layer.id}
+      className={'document-cover '+(isEditing&&selected===layer.id?'is-selected':'')}
+      onPointerDown={isEditing?e=>startDrag(e,layer):undefined}
+      style={{left:(Number(layer.x)||0)+'%',top:(Number(layer.y)||0)+'%',
+        width:(Number(layer.width)||74)+'%',height:(Number(layer.height)||10)+'%',
+        background:layer.color||'#eee1c7',opacity:Number.isFinite(layer.opacity)?layer.opacity:1}}
+      title={isEditing?'Tarja para substituir partes do documento':'Área editada'}/>;
     const styleName=String(layer.style||'body').replace(/[^a-z]/g,'');
     const fontSize=Math.max(10,Math.min(44,Number(layer.fontSize)||18));
     return <div key={layer.id} className={'document-layer layer-'+styleName+
