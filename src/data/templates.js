@@ -1,4 +1,4 @@
-import {craftedTemplates} from './craftedTemplates';
+import {craftedTemplates} from './craftedTemplates.js';
 
 /** Modelos originais ParaDocx. Coordenadas em percentuais (0-100). */
 const baseTemplates = [

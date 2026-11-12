@@ -5,7 +5,9 @@ import { templates, newPages, templateCategories } from './data/templates';
 import HandoutArt from './HandoutArt.jsx';
 import DocumentCanvas from './DocumentCanvas.jsx';
 import LayerProperties from './LayerProperties.jsx';
-import {prepareImport, uploadExtension, INPUT_ACCEPT} from './lib/importHandout.js';
+import {prepareImport, prepareLayerImage, uploadExtension, INPUT_ACCEPT} from './lib/importHandout.js';
+import {elements,getElement,requiresUV} from './lib/elements.js';
+import {ElementAtmosphere,ElementHero,ElementSigil,ElementPicker} from './ElementAtmosphere.jsx';
 import PlayerPortal from './PlayerPortal.jsx';
 import MasterSetup from './MasterSetup.jsx';
 import {masterAuth} from './lib/masterAuth.js';
@@ -53,6 +55,11 @@ export default function App() {
   const [importBusy,setImportBusy]=useState(false);
   const [extractedPdfText,setExtractedPdfText]=useState({});
   const [signedBackgroundUrl,setSignedBackgroundUrl]=useState('');
+  const [theme,setTheme]=useState('none');
+  const [previewAffinity,setPreviewAffinity]=useState('all');
+  const [signedImages,setSignedImages]=useState({});
+  const imagePaths=JSON.stringify((pages?.[side]||[]).filter(l=>l.kind==='image'&&l.assetPath).map(l=>[l.id,l.assetPath]));
+  const imageUrls={...signedImages,...Object.fromEntries(Object.entries(pendingAssets).filter(([key])=>key.startsWith('layer:')).map(([key,a])=>[key.slice(6),a?.previewUrl]))};
   const isMaster = !!campaign && campaign.owner_id === session?.user?.id;
   const players = playerSeats.filter(p => p.enabled);
   const selectedLayer = (pages?.[side] || []).find(l => l.id === selected);
@@ -81,6 +88,18 @@ export default function App() {
       });
     return ()=>{active=false};
   },[screen,side,currentAssetPath]);
+
+  useEffect(()=>{
+    let active=true;setSignedImages({});
+    if(!db||!['editor','viewer'].includes(screen))return;
+    Promise.all(JSON.parse(imagePaths).map(async ([id,path])=>{
+      const {data,error}=await db.storage.from('handout-assets').createSignedUrl(path,3600);
+      if(error)throw error;
+      return [id,data.signedUrl];
+    })).then(entries=>{if(active)setSignedImages(Object.fromEntries(entries));})
+      .catch(()=>{if(active)setNotice('Não foi possível carregar uma imagem do documento.');});
+    return ()=>{active=false;};
+  },[imagePaths,screen]);
 
   useEffect(() => {
     if (!db) { setChecking(false); return; }
@@ -112,7 +131,7 @@ export default function App() {
     const [a,b,c] = await Promise.all([
       db.from('members').select('*').eq('campaign_id',cid),
       db.from('documents').select('*').eq('campaign_id',cid).order('created_at',{ascending:false}),
-      db.from('player_seats').select('id,campaign_id,display_name,enabled,created_at').eq('campaign_id',cid).order('created_at')
+      db.from('player_seats').select('id,campaign_id,display_name,enabled,created_at,affinity').eq('campaign_id',cid).order('created_at')
     ]);
     if (a.error || b.error || c.error) setNotice((a.error||b.error||c.error).message);
     else {setMembers(a.data||[]);setDocuments(b.data||[]);setPlayerSeats(c.data||[]);}
@@ -153,6 +172,27 @@ export default function App() {
     await refreshCampaign(campaign.id);
     setNotice('Acesso individual gerado para '+data.name+'. Copie o link e envie somente a essa pessoa.');
   }
+  async function changeAffinity(seat,affinity){
+    if(working)return;setWorking(true);
+    try {
+      const {error}=await db.from('player_seats').update({affinity}).eq('id',seat.id).select('id').single();
+      if(error)throw error;
+      await refreshCampaign(campaign.id);
+      setNotice('Afinidade de '+seat.display_name+': '+getElement(affinity).name+'. O portal do jogador atualizará em até 12 segundos.');
+    }catch(error){setNotice(error.message);}finally{setWorking(false);}
+  }
+  async function addImageLayer(event){
+    const file=event.target.files?.[0];event.target.value='';if(!file)return;
+    const targetSide=side;setImportBusy(true);
+    try {
+      const blob=await prepareLayerImage(file);
+      const layer={id:id(),kind:'image',alt:file.name.replace(/\.[^.]+$/,''),x:20,y:25,width:40,height:30,uv:false,affinity:'none',fit:'contain',opacity:1};
+      setPendingAssets(old=>({...old,['layer:'+layer.id]:{blob,previewUrl:URL.createObjectURL(blob)}}));
+      setPages(old=>({...old,[targetSide]:[...(old[targetSide]||[]),layer]}));
+      setSelected(layer.id);setMode('advanced');
+      setNotice('Imagem adicionada. Em Condições de revelação, escolha UV, afinidade ou ambos.');
+    }catch(error){setNotice(error.message);}finally{setImportBusy(false);}
+  }
   async function rotateSeat(seat) {
     if(!window.confirm('Gerar um link novo para '+seat.display_name+'? O link antigo será invalidado.'))return;
     setWorking(true);
@@ -187,10 +227,10 @@ export default function App() {
     setPages(source ? JSON.parse(JSON.stringify(source.pages || {front:[],back:[]})) : newPages(p));
     setPendingAssets(previous=>{Object.values(previous).forEach(asset=>asset?.previewUrl&&URL.revokeObjectURL(asset.previewUrl));return {};});
     setExtractedPdfText({});
-    setSide('front');setMode('quick');setSelected(null);setScreen('editor');
+    setPreviewAffinity('all');setSide('front');setMode('quick');setSelected(null);setScreen('editor');
   }
   function openViewer(item) {
-    setDocument(item);setTitle(item.title);setTemplate(item.template);
+    setPreviewAffinity('all');setDocument(item);setTitle(item.title);setTemplate(item.template);
     setPendingAssets({});setExtractedPdfText({});
     setPages(item.pages || {front:[],back:[]});setSide('front');setScreen('viewer');
   }
@@ -282,7 +322,7 @@ export default function App() {
     setWorking(true);
     const uploaded=[];
     try{
-      const nextPages={...pages,backgrounds:{...(pages.backgrounds||{})}};
+      const nextPages={...pages,front:pages.front.map(l=>({...l})),back:pages.back.map(l=>({...l})),backgrounds:{...(pages.backgrounds||{})}};
       for(const page of ['front','back']){
         const blob=pendingAssets[page]?.blob;
         if(!blob)continue;
@@ -294,6 +334,14 @@ export default function App() {
         if(uploadError)throw uploadError;
         uploaded.push(path);
         nextPages.backgrounds[page]=path;
+      }
+      for(const page of ['front','back'])for(const layer of nextPages[page]){
+        const blob=pendingAssets['layer:'+layer.id]?.blob;
+        if(layer.kind!=='image'||!blob)continue;
+        if(blob.size>5*1024*1024)throw new Error('Uma imagem excede 5 MB após a conversão.');
+        const path=campaign.id+'/'+window.crypto.randomUUID()+'.'+uploadExtension(blob);
+        const {error}=await db.storage.from('handout-assets').upload(path,blob,{contentType:blob.type,upsert:false});
+        if(error)throw error;uploaded.push(path);layer.assetPath=path;
       }
       const body={title:title.trim(),template,pages:nextPages};
       const result=document
@@ -326,13 +374,13 @@ export default function App() {
   if(checking)return <div className="splash">✦ Carregando o arquivo...</div>;
   if(!db)return <div className="splash"><h1>ParaDocx</h1><p>Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY na Vercel.</p></div>;
 
-  return <div className="app-shell">
+  return <div className="app-shell elemental-shell" data-element={theme}><ElementAtmosphere element={theme}/>
     <aside className="sidebar">
       <div className="brand"><span className="brand-emblem">P<sup>✦</sup></span><div><strong>ParaDocx</strong><small>O arquivo do inexplicável</small></div></div>
       <div className="side-label">NAVEGAÇÃO</div>
       <button className={'side-link '+(screen==='home'?'current':'')} onClick={()=>{setCampaign(null);setScreen('home');if(session)loadCampaigns()}}>⌂ <span>Minhas campanhas</span></button>
       {campaign&&<><button className={'side-link '+(['campaign','viewer','editor'].includes(screen)?'current':'')} onClick={()=>setScreen('campaign')}>▣ <span>Documentos</span></button><button className={'side-link '+(screen==='mechanics'?'current':'')} onClick={()=>setScreen('mechanics')}>♧ <span>Mecânicas</span></button></>}
-      <div className="side-bottom"><div className="profile-icon">{session?.user?.email?.slice(0,1).toUpperCase()||'?'}</div><div className="profile-text"><strong>{session?.user?.email?.split('@')[0]||'Visitante'}</strong><small>{session?'Mestre • mestre01':'Acesso do mestre'}</small>{session&&<button onClick={()=>db.auth.signOut()}>Sair ↗</button>}</div></div>
+      <div className="master-theme-control"><ElementPicker label="Atmosfera do mestre" value={theme} onChange={setTheme}/><small>Só muda a sua tela. A afinidade de cada jogador é definida na campanha.</small></div><div className="side-bottom"><div className="profile-icon">{session?.user?.email?.slice(0,1).toUpperCase()||'?'}</div><div className="profile-text"><strong>{session?.user?.email?.split('@')[0]||'Visitante'}</strong><small>{session?'Mestre • mestre01':'Acesso do mestre'}</small>{session&&<button onClick={()=>db.auth.signOut()}>Sair ↗</button>}</div></div>
     </aside>
     <main className="main">
       <header className="top-bar"><span>PARADOCX / {campaign?.name?.toUpperCase()||'ARQUIVO'} / {screen.toUpperCase()}</span><span className="top-label">◉ AMBIENTE DE INVESTIGAÇÃO</span></header>
@@ -352,13 +400,14 @@ export default function App() {
         <div className="section-heading"><h2>Campanhas disponíveis</h2><small>{campaigns.length} ARQUIVOS</small></div><div className="campaign-grid">{campaigns.map(c=><button key={c.id} className="campaign-card" onClick={()=>{setCampaign(c);setScreen('campaign')}}><span className="case-symbol">✧</span><small>{c.owner_id===session.user.id?'MESTRE':'INVESTIGADOR'}</small><h3>{c.name}</h3><span className="card-footer">ABRIR ARQUIVO ↗</span></button>)}{campaigns.length===0&&<div className="empty">Você ainda não participa de nenhuma campanha.</div>}</div>
       </section> :
       screen==='campaign' ? <section className="page"><div className="eyebrow">ARQUIVO DE CAMPANHA / {isMaster?'CONTROLE DO MESTRE':'INVESTIGAÇÃO'}</div><div className="page-heading"><div><h1>{campaign.name}<span className="period">.</span></h1><p>{isMaster?'Organize e distribua suas pistas.':'Investigue os documentos recebidos do mestre.'}</p></div>{isMaster&&<div className="campaign-actions"><button className="outline" onClick={()=>window.document.getElementById('modelos')?.scrollIntoView({behavior:'smooth'})}>Explorar {templates.length} modelos ↓</button><button className="outline" onClick={()=>{startEditor(null,getTemplate('blank'));setNotice('Escolha seu arquivo no painel Importar documento.');}}>⇧ Importar documento</button><button className="primary" onClick={()=>startEditor(null,templates[0])}>+ Criar documento</button></div>}</div>
+        <ElementHero element={theme} preview/>
         <div className="stats"><div><small>DOCUMENTOS VISÍVEIS</small><strong>{documents.length}</strong></div><div><small>INVESTIGADORES</small><strong>{players.length}/{campaign.max_players}</strong></div><div><small>ACESSO</small><strong>{isMaster?'Mestre':'Jogador'}</strong></div></div>
         {isMaster&&<section className="master-players">
           <div className="section-heading"><h2>Jogadores e acessos individuais</h2><small>{players.length}/{campaign.max_players} JOGADORES</small></div>
           <p className="master-players-intro">Crie uma vaga para cada jogador. Cada pessoa recebe um link exclusivo que abre seu próprio inventário, sem senha. Quem possuir o link pode acessá-lo; você pode substituí-lo a qualquer momento.</p>
           <div className="seat-toolbar"><form onSubmit={createSeat}><label>Nome do jogador<input value={newPlayerName} maxLength="60" required placeholder="Ex.: Rafael / Investigador Moretti" onChange={e=>setNewPlayerName(e.target.value)}/></label><button className="primary" type="submit" disabled={working||players.length>=campaign.max_players}>+ Criar acesso</button></form>
           <div className="limit-control"><label>Máximo de jogadores<input type="number" min={Math.max(1,players.length)} max="30" value={limitDraft} onChange={e=>setLimitDraft(e.target.value)}/></label><button className="outline" onClick={changePlayerLimit}>Salvar limite</button></div></div>
-          <div className="seat-list">{players.map(p=><div className="seat-row" key={p.id}><span className="profile-icon">{p.display_name[0]?.toUpperCase()}</span><div className="seat-detail"><strong>{p.display_name}</strong><small>{documents.filter(d=>d.holder_seat_id===p.id&&d.is_published).length} documento(s) no inventário</small></div><div className="seat-actions">{playerLinks[p.id]&&<button className="primary compact" onClick={()=>copyLink(playerLinks[p.id])}>Copiar link individual</button>}<button className="outline compact" disabled={working} onClick={()=>rotateSeat(p)}>{playerLinks[p.id]?'Trocar link':'Gerar novo link'}</button><button className="danger" onClick={()=>deactivateSeat(p)} disabled={working}>Desativar</button></div></div>)}{players.length===0&&<div className="empty">Nenhum jogador cadastrado. Crie a primeira vaga usando o nome dele acima.</div>}</div>
+          <div className="seat-list">{players.map(p=><div className="seat-row" key={p.id}><span className="seat-sigil" data-element={p.affinity||'none'} style={{color:getElement(p.affinity).color}}><ElementSigil element={p.affinity}/></span><div className="seat-detail"><strong>{p.display_name}</strong><small>{documents.filter(d=>d.holder_seat_id===p.id&&d.is_published).length} documento(s) no inventário</small></div><ElementPicker label="Afinidade do jogador" value={p.affinity} onChange={value=>changeAffinity(p,value)} disabled={working}/><div className="seat-actions">{playerLinks[p.id]&&<button className="primary compact" onClick={()=>copyLink(playerLinks[p.id])}>Copiar link individual</button>}<button className="outline compact" disabled={working} onClick={()=>rotateSeat(p)}>{playerLinks[p.id]?'Trocar link':'Gerar novo link'}</button><button className="danger" onClick={()=>deactivateSeat(p)} disabled={working}>Desativar</button></div></div>)}{players.length===0&&<div className="empty">Nenhum jogador cadastrado. Crie a primeira vaga usando o nome dele acima.</div>}</div>
         </section>}
         {isMaster&&<section className="handout-library" id="modelos">
           <div className="section-heading"><h2>Acervo ilustrado de documentos</h2><small>{templates.length} PEÇAS EDITÁVEIS</small></div>
@@ -409,12 +458,15 @@ export default function App() {
               <small>PNG, JPG, WEBP (lado selecionado), PDF (páginas 1 e 2), TXT e MD • até 15 MB. A arte original do PDF/imagem vira fundo: use uma tarja para cobrir texto antigo e escreva outro por cima, além de adicionar pistas UV.</small>
             </div><div className="editor-template-info">{getTemplate(template).icon} {getTemplate(template).description}</div><label>Título<input maxLength="150" value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Modelo<select value={template} onChange={e=>chooseTemplate(e.target.value)}>{templates.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
             <div className="mode-switch"><button className={mode==='quick'?'active':''} onClick={()=>setMode('quick')}>Campos rápidos</button><button className={mode==='advanced'?'active':''} onClick={()=>setMode('advanced')}>Camadas livres</button></div>
-            {mode==='quick'?<div className="field-list">{(pages[side]||[]).filter(l=>l.kind!=='cover').map((l,i)=><label key={l.id}>{l.kind==='uv'?'✧ Mensagem secreta':'Texto '+(i+1)}<textarea rows="3" value={l.text} onChange={e=>updateLayer(l.id,{text:e.target.value})}/></label>)}<button className="outline" onClick={()=>addLayer('normal')}>+ Adicionar texto</button><button className="outline" onClick={()=>addLayer('uv')}>+ Adicionar segredo UV</button><button className="outline" onClick={()=>addLayer('cover')}>+ Tarja para substituir texto</button></div>:<><div className="layer-actions"><button onClick={()=>addLayer('normal')}>+ Texto</button><button onClick={()=>addLayer('uv')}>+ Luz negra</button><button onClick={()=>addLayer('cover')}>+ Tarja</button></div><div className="layer-list">{(pages[side]||[]).map(l=><button className={selected===l.id?'selected':''} key={l.id} onClick={()=>setSelected(l.id)}>{l.kind==='cover'?'▧':l.kind==='uv'?'✧':'☰'} {l.kind==='cover'?'Tarja de substituição':(l.text||'').slice(0,27)||'Texto vazio'}</button>)}</div>{selectedLayer&&<LayerProperties layer={selectedLayer}
+            {mode==='quick'?<div className="field-list">{(pages[side]||[]).filter(l=>l.kind!=='cover'&&l.kind!=='image').map((l,i)=><label key={l.id}>{requiresUV(l)?'✧ Mensagem secreta':'Texto '+(i+1)}<textarea rows="3" value={l.text} onChange={e=>updateLayer(l.id,{text:e.target.value})}/></label>)}<button className="outline" onClick={()=>addLayer('normal')}>+ Adicionar texto</button><button className="outline" onClick={()=>addLayer('uv')}>+ Adicionar segredo UV</button><button className="outline" onClick={()=>addLayer('cover')}>+ Tarja para substituir texto</button></div>:<><div className="layer-actions"><button onClick={()=>addLayer('normal')}>+ Texto</button><button onClick={()=>addLayer('uv')}>+ Luz negra</button><button onClick={()=>addLayer('cover')}>+ Tarja</button></div><div className="layer-list">{(pages[side]||[]).map(l=><button className={selected===l.id?'selected':''} key={l.id} onClick={()=>setSelected(l.id)}>{l.kind==='image'?'▧':l.kind==='cover'?'▧':requiresUV(l)?'✧':'☰'} {l.kind==='image'?(l.alt||'Imagem'):l.kind==='cover'?'Tarja de substituição':(l.text||'').slice(0,27)||'Texto vazio'}{l.affinity&&l.affinity!=='none'?' · '+getElement(l.affinity).name:''}{requiresUV(l)?' · UV':''}</button>)}</div>{selectedLayer&&<LayerProperties layer={selectedLayer}
               onChange={fields=>updateLayer(selected,fields)} onDelete={deleteLayer}/>}</>}
+            <label className="file-input-label image-layer-upload">+ Adicionar imagem como camada<input type="file" accept=".png,.jpg,.jpeg,.webp" onChange={addImageLayer} disabled={importBusy||working}/></label>
+            <p className="editor-hint">Imagens ficam sobre o documento e podem ser movidas, redimensionadas e reveladas por UV ou afinidade. PNG e WEBP preservam transparência.</p>
             <p className="editor-hint">Modo rápido para preencher. Modo livre para arrastar, posicionar, mudar estilos e criar textos UV. Você pode alternar entre frente e verso acima da folha.</p>
           </aside>}
           <div className="editor-stage"><div className="page-switch"><button className={side==='front'?'chosen':''} onClick={()=>{setSide('front');setSelected(null)}}>Frente</button><button className={side==='back'?'chosen':''} onClick={()=>{setSide('back');setSelected(null)}}>Verso</button></div>
-            <Sheet key={screen+side+document?.id} pages={pages} side={side} paper={getTemplate(template).paper} templateId={template} backgroundUrl={currentBackgroundUrl} editable={screen==='editor'} selected={selected} onSelect={setSelected} onDrag={(layerId,x,y)=>updateLayer(layerId,{x,y})}/>
+            <div className="preview-affinity-bar"><label>Simular visão de<select value={previewAffinity} onChange={e=>setPreviewAffinity(e.target.value)}><option value="all">Mestre — todas as camadas</option>{elements.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label><small>{previewAffinity==='all'?'Edite livremente. As condições não limitam o mestre.':'Simulação ativa: as condições de afinidade e UV são respeitadas.'}</small></div>
+            <Sheet imageUrls={imageUrls} affinity={previewAffinity} preview={previewAffinity!=='all'} key={screen+side+document?.id} pages={pages} side={side} paper={getTemplate(template).paper} templateId={template} backgroundUrl={currentBackgroundUrl} editable={screen==='editor'} masterView={previewAffinity==='all'} selected={selected} onSelect={setSelected} onDrag={(layerId,x,y)=>updateLayer(layerId,{x,y})}/>
           </div>
         </div>
       </section> : null}

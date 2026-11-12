@@ -100,7 +100,7 @@ export function ArtDefs({ids}) {
         <stop offset="0.4" stopColor="#2d7a4f" stopOpacity="0.34"/>
         <stop offset="1" stopColor="#0d2c1e" stopOpacity="0.62"/>
       </linearGradient>
-      {/* plástico */
+      {/* plástico */}
       <linearGradient id={ids.plastic} x1="0.05" y1="0" x2="0.95" y2="1">
         <stop offset="0" stopColor="#e6e0d6"/>
         <stop offset="0.3" stopColor="#c9c1b4"/>
@@ -128,7 +128,7 @@ export function ArtDefs({ids}) {
         <stop offset="0.75" stopColor="#e2c56f"/>
         <stop offset="1" stopColor="#6d5018"/>
       </linearGradient>
-      {/* tinta */
+      {/* tinta */}
       <linearGradient id={ids.ink} x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stopColor="#2f3a46"/>
         <stop offset="0.55" stopColor="#1b232c"/>
