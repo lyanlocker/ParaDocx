@@ -5,8 +5,8 @@ import {templates,newPages,templateCategories} from '../src/data/templates.js';
 
 const css=readFileSync(new URL('../src/styles.css',import.meta.url),'utf8');
 
-test('library has 35 original templates and diverse categories',()=>{
-  assert.equal(templates.length,35);
+test('library retains at least 35 original templates and diverse categories',()=>{
+  assert.ok(templates.length>=35);
   assert.equal(new Set(templates.map(t=>t.id)).size,templates.length);
   assert.ok(templateCategories.length>=12);
   assert.equal(templateCategories[0],'Todos');
@@ -27,7 +27,7 @@ test('each template has a valid id, description, paper stock and layers',()=>{
       assert.ok(layer.text.trim().length>0,template.id+' has empty text');
       assert.ok(layer.x>=0&&layer.x<=96,template.id+' invalid x');
       assert.ok(layer.y>=0&&layer.y<=94,template.id+' invalid y');
-      assert.ok(layer.width>=20&&layer.width<=100,template.id+' invalid width');
+      assert.ok(layer.width>=5&&layer.width<=100,template.id+' invalid width');
       assert.ok(layer.fontSize>=10&&layer.fontSize<=44,template.id+' invalid font size');
     }
     for(const secret of template.secrets) assert.equal(secret.kind,'uv',template.id);

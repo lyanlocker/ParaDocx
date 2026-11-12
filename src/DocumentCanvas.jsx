@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
+import {canSeeLayer,requiresUV} from './lib/elements.js';
 import HandoutArt from './HandoutArt.jsx';
 
 /**
@@ -8,14 +9,14 @@ import HandoutArt from './HandoutArt.jsx';
  */
 export default function DocumentCanvas({
   pages, side='front', paper='letter', templateId='letter',
-  backgroundUrl='', editable=false, selected=null, onSelect=()=>{}, onDrag=()=>{}
+  backgroundUrl='', imageUrls={}, affinity='none', preview=false, masterView=false, editable=false, selected=null, onSelect=()=>{}, onDrag=()=>{}
 }) {
   const [uv,setUV]=useState(false);
   const [point,setPoint]=useState({x:50,y:50});
   const sheetRef=useRef(null);
   const dragRef=useRef(null);
-  const layers=Array.isArray(pages?.[side])?pages[side]:[];
-  const isEditing=editable&&!uv;
+  const layers=(Array.isArray(pages?.[side])?pages[side]:[]).filter(l=>masterView||editable&&!preview||canSeeLayer(l,affinity));
+  const isEditing=editable&&!preview&&!uv;
 
   useEffect(()=>{
     if (!uv) return;
@@ -47,6 +48,11 @@ export default function DocumentCanvas({
   }
   function endInteraction(){dragRef.current=null;}
   const layerNode=layer=>{
+    if(layer.kind==='image')return <div key={layer.id} className={'document-image-layer '+(isEditing&&selected===layer.id?'is-selected':'')+(requiresUV(layer)?' secret-image':'')}
+      onPointerDown={isEditing?e=>startDrag(e,layer):undefined}
+      style={{left:(Number(layer.x)||0)+'%',top:(Number(layer.y)||0)+'%',width:(Number(layer.width)||35)+'%',height:(Number(layer.height)||25)+'%',opacity:layer.opacity??1,transform:'rotate('+(Number(layer.rotation)||0)+'deg)'}}>
+      {imageUrls[layer.id]?<img src={imageUrls[layer.id]} alt={layer.alt||'Imagem do documento'} draggable="false" style={{objectFit:layer.fit||'contain'}}/>:<span className="image-layer-placeholder">{isEditing?'▧ Imagem': 'Carregando imagem…'}</span>}
+    </div>;
     if(layer.kind==='cover')return <div key={layer.id}
       className={'document-cover '+(isEditing&&selected===layer.id?'is-selected':'')}
       onPointerDown={isEditing?e=>startDrag(e,layer):undefined}
@@ -57,7 +63,7 @@ export default function DocumentCanvas({
     const styleName=String(layer.style||'body').replace(/[^a-z]/g,'');
     const fontSize=Math.max(10,Math.min(44,Number(layer.fontSize)||18));
     return <div key={layer.id} className={'document-layer layer-'+styleName+
-      (layer.kind==='uv'?' secret-text':'')+
+      (requiresUV(layer)?' secret-text':'')+
       (isEditing&&selected===layer.id?' is-selected':'')}
       onPointerDown={isEditing?e=>startDrag(e,layer):undefined}
       style={{left:(Number(layer.x)||0)+'%',top:(Number(layer.y)||0)+'%',
@@ -91,12 +97,12 @@ export default function DocumentCanvas({
         :pages?.backgrounds?.[side]
           ?<div className="document-background-placeholder" aria-hidden="true"/>
           :<HandoutArt templateId={templateId} side={side}/>}
-      {layers.filter(l=>l.kind!=='uv').map(layerNode)}
+      {layers.filter(l=>!requiresUV(l)).map(layerNode)}
       {uv && <><div className="uv-darkness" style={{background:darkness}}/>
         <div className="uv-blue-light" style={{left:point.x+'%',top:point.y+'%'}}/></>}
-      <div className={'uv-content '+(isEditing?'uv-editable':'')+(uv?' uv-revealed':'')}
+      <div aria-hidden={!isEditing&&!uv} className={'uv-content '+(isEditing?'uv-editable':'')+(uv?' uv-revealed':'')}
         style={isEditing?undefined:{WebkitMaskImage:secretMask,maskImage:secretMask}}>
-        {layers.filter(l=>l.kind==='uv').map(layerNode)}
+        {layers.filter(l=>requiresUV(l)).map(layerNode)}
       </div>
       {uv&&<div className="uv-lens-ring" style={{left:point.x+'%',top:point.y+'%'}}/>}
     </div>

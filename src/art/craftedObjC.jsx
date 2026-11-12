@@ -21,7 +21,7 @@ export function Microfiche({ids, side}) {
       <CastShadow x={400} y={1000} rx={262} ry={34}/>
       <g transform="rotate(-0.8 400 566)">
         <rect x="120" y="140" width="560" height="800" rx="6" fill="#20262c" stroke="#0b0d10" strokeWidth="5"/>
-        <rect x="120" y="140" width="560" height="800" rx="6" fill="url(#" + ids.metalDark + ')" opacity="0.35"/>
+        <rect x="120" y="140" width="560" height="800" rx="6" fill={'url(#'+ids.metalDark+')'} opacity="0.35"/>
         <rect x="120" y="140" width="560" height="86" fill="#171c21"/>
         <path d="M120 226 h560" stroke="#4a5560" strokeWidth="2"/>
         <g transform="translate(146 246)">
@@ -133,9 +133,9 @@ export function Tarot({ids, side}) {
     <g>
       <CastShadow x={400} y={1010} rx={230} ry={36}/>
       <g transform="rotate(-1.4 400 566)">
-        <rect x="212" y="120" width="376" height="880" rx="10" fill="url(#" + ids.gold + ')"
+        <rect x="212" y="120" width="376" height="880" rx="10" fill={'url(#'+ids.gold+')'}
           stroke="#4a3712" strokeWidth="4"/>
-        <rect x="228" y="136" width="344" height="848" rx="6" fill="url(#" + ids.paper + ')"
+        <rect x="228" y="136" width="344" height="848" rx="6" fill={'url(#'+ids.paper+')'}
           stroke="#8f6d22" strokeWidth="2"/>
         <rect x="228" y="136" width="344" height="848" fill="#cbb98f" opacity="0.22"/>
         <rect x="250" y="158" width="300" height="804" fill="none" stroke="#9b7a2c" strokeWidth="2.6"
@@ -182,9 +182,9 @@ export function Tarot({ids, side}) {
     <g>
       <CastShadow x={400} y={1010} rx={230} ry={36}/>
       <g transform="rotate(1.4 400 566)">
-        <rect x="212" y="120" width="376" height="880" rx="10" fill="url(#" + ids.gold + ')"
+        <rect x="212" y="120" width="376" height="880" rx="10" fill={'url(#'+ids.gold+')'}
           stroke="#4a3712" strokeWidth="4"/>
-        <rect x="228" y="136" width="344" height="848" rx="6" fill="url(#" + ids.paper + ')"
+        <rect x="228" y="136" width="344" height="848" rx="6" fill={'url(#'+ids.paper+')'}
           stroke="#8f6d22" strokeWidth="2"/>
         <rect x="228" y="136" width="344" height="848" fill="#c9b98f" opacity="0.3"/>
         <rect x="250" y="158" width="300" height="804" fill="none" stroke="#9b7a2c" strokeWidth="2.6"
@@ -218,10 +218,10 @@ export function Badge({ids, side}) {
     <g>
       <CastShadow x={400} y={928} rx={250} ry={32}/>
       <g transform="rotate(-1.8 400 566)">
-        <rect x="132" y="300" width="536" height="536" rx="18" fill="url(#" + ids.plastic + ')"
+        <rect x="132" y="300" width="536" height="536" rx="18" fill={'url(#'+ids.plastic+')'}
           stroke="#3b3730" strokeWidth="5"/>
         <rect x="132" y="300" width="536" height="536" rx="18" fill="#fff" opacity="0.1"/>
-        <path d="M132 318 q0 -18 18 -18 h500 q18 0 18 18 v74 h-536 z" fill="url(#" + ids.blue + ')"
+        <path d="M132 318 q0 -18 18 -18 h500 q18 0 18 18 v74 h-536 z" fill={'url(#'+ids.blue+')'}
           stroke="#16273c" strokeWidth="3"/>
         <path d="M132 392 h536" stroke="#16273c" strokeWidth="3"/>
         <g opacity="0.85">
@@ -246,7 +246,7 @@ export function Badge({ids, side}) {
           <path d="M386 554 H616"/>
           <path d="M386 596 H520"/>
         </g>
-        <path d="M132 762 q0 18 18 18 h500 q18 0 18 -18 v56 h-536 z" fill="url(#" + ids.blue + ')"
+        <path d="M132 762 q0 18 18 18 h500 q18 0 18 -18 v56 h-536 z" fill={'url(#'+ids.blue+')'}
           stroke="#16273c" strokeWidth="3"/>
         <path d="M132 762 h536" stroke="#16273c" strokeWidth="3"/>
         <rect x="150" y="792" width="500" height="18" rx="9" fill="#0d1014" opacity="0.75"/>
@@ -264,10 +264,10 @@ export function Badge({ids, side}) {
     <g>
       <CastShadow x={400} y={928} rx={250} ry={32}/>
       <g transform="rotate(1.4 400 566)">
-        <rect x="132" y="300" width="536" height="536" rx="18" fill="url(#" + ids.plastic + ')"
+        <rect x="132" y="300" width="536" height="536" rx="18" fill={'url(#'+ids.plastic+')'}
           stroke="#3b3730" strokeWidth="5"/>
         <rect x="132" y="300" width="536" height="536" rx="18" fill="#000" opacity="0.06"/>
-        <path d="M132 318 q0 -18 18 -18 h500 q18 0 18 18 v40 h-536 z" fill="url(#" + ids.blue + ')"
+        <path d="M132 318 q0 -18 18 -18 h500 q18 0 18 18 v40 h-536 z" fill={'url(#'+ids.blue+')'}
           stroke="#16273c" strokeWidth="3"/>
         <g opacity="0.45">
           {Array.from({length: 7}, (_, i) => (

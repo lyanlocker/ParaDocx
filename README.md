@@ -52,3 +52,42 @@ Os arquivos convertidos ficam no bucket **privado** `handout-assets`, em um cami
 ## Testes
 
 Use `npm test` para verificar modelos e tipos de importação; `npm run build` valida a compilação do site. Fluxos completos com mestre e dois jogadores devem ser testados também no navegador.
+
+### Elemental affinities and image clues (November 2026)
+
+In a campaign, the master selects each player's affinity beside their name. The
+player portal receives the saved affinity on its next refresh (up to 12 seconds),
+including while reading a document. Existing players default to **Sem afinidade**.
+Sangue, Energia, Medo, Morte and Conhecimento each have a vector sigil, palette,
+background composition, frames and restrained animation; reduced-motion is honored.
+The master's atmosphere selector is cosmetic and never changes a player's affinity.
+
+The editor's **Adicionar imagem como camada** accepts PNG/JPEG/WEBP, preserving
+transparency. Images can be moved, resized, rotated and set to contain/cover. In
+**Camadas livres → Condições de revelação**, both text and images support independent
+UV and affinity requirements. Combining them requires the matching affinity AND the
+UV beam. **Simular visão de** previews each affinity without changing saved data.
+Original document backdrops keep their original colors.
+
+Layer schema: `{kind:'image', assetPath, alt, x,y,width,height,rotation,fit,opacity,
+uv:boolean, affinity:'none'|'sangue'|'energia'|'medo'|'morte'|'conhecimento'}`.
+Text layers retain their old schema; `kind:'uv'` remains supported. Paths refer to
+private `handout-assets` objects. The player endpoint filters both sides by the
+server's seat affinity before returning JSON and independently checks ownership,
+publication, campaign and affinity before serving image bytes. No signed storage
+URLs are returned to players. UV is an exploration effect, not encryption of
+content a player is authorized to receive. Previously viewed clues cannot be erased
+from a player's memory or screenshots.
+
+Deployment: apply the two `20261112*` affinity migrations, then deploy
+`player-access` with both `index.ts` and `visibility.js`, preserving `verify_jwt=false`
+(the function authenticates private player tokens itself), then deploy the frontend.
+The column-grants migration is required: direct updates may change only `affinity`,
+not player names, token hashes, campaign IDs or enabled flags. The storage policies
+also explicitly qualify `objects.name` to fix the original correlated-name bug.
+
+Validation: `npm ci && npm run check` covers template integrity, legacy UV,
+affinity combinations, both sides and asset authorization. Database verification
+uses a rolled-back fixture to test master updates and outsider rejection. Browser
+component QA covers atmospheric changes, image visibility and UV. Full production
+login/upload/transfer with real player accounts still requires a session test.

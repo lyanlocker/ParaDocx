@@ -11,20 +11,20 @@ export function Bottle({ids, side}) {
     <g>
       {/* corpo */}
       <path d="M300 340 q-64 26 -64 96 v420 q0 96 64 118 h200 q64 -22 64 -118 v-420 q0 -70 -64 -96 z"
-        fill="url(#" + ids.greenGlass + ')" stroke="#0a1a12" strokeWidth="6"/>
+        fill={'url(#'+ids.greenGlass+')'} stroke="#0a1a12" strokeWidth="6"/>
       {/* ombro */}
       <path d="M300 340 q100 -34 200 0 q-14 60 -40 96 h-120 q-26 -36 -40 -96 z"
-        fill="url(#" + ids.greenGlass + ')" stroke="#0a1a12" strokeWidth="6"/>
+        fill={'url(#'+ids.greenGlass+')'} stroke="#0a1a12" strokeWidth="6"/>
       {/* gargalo */}
       <path d="M352 176 q0 -46 48 -46 q48 0 48 46 v170 q0 34 -48 40 q-48 -6 -48 -40 z"
-        fill="url(#" + ids.greenGlass + ')" stroke="#0a1a12" strokeWidth="6"/>
+        fill={'url(#'+ids.greenGlass+')'} stroke="#0a1a12" strokeWidth="6"/>
       {/* reflexos verticais */}
       <path d="M286 470 q-8 190 14 330" fill="none" stroke="#dfffe9" strokeOpacity="0.34" strokeWidth="16"
         strokeLinecap="round"/>
       <path d="M520 460 q10 200 -12 344" fill="none" stroke="#bfe9d2" strokeOpacity="0.14" strokeWidth="8"
         strokeLinecap="round"/>
       {/*Capsula */}
-      <path d="M346 158 q0 -40 54 -40 q54 0 54 40 v34 h-108 z" fill="url(#" + ids.gold + ')"
+      <path d="M346 158 q0 -40 54 -40 q54 0 54 40 v34 h-108 z" fill={'url(#'+ids.gold+')'}
         stroke="#3b2c0d" strokeWidth="4"/>
       <path d="M346 176 h108 v16 h-108 z" fill="#000" opacity="0.22"/>
       {/* gargalheira */}
@@ -43,7 +43,7 @@ export function Bottle({ids, side}) {
         {glass}
         {/* rótulo */}
         <g>
-          <path d="M258 560 q142 -18 284 0 v268 q-142 18 -284 0 z" fill="url(#" + ids.paper + ')"
+          <path d="M258 560 q142 -18 284 0 v268 q-142 18 -284 0 z" fill={'url(#'+ids.paper+')'}
             stroke="#a89a78" strokeWidth="3"/>
           <path d="M258 560 q142 -18 284 0 v268 q-142 18 -284 0 z" fill="#d8c89a" opacity="0.35"/>
           {/* borda dupla */}
@@ -112,7 +112,7 @@ export function Polaroid({ids, side}) {
       <CastShadow x={402} y={966} rx={252} ry={38}/>
       <g transform="rotate(-2.2 400 566)">
         {/* moldura */}
-        <rect x="146" y="150" width="508" height="620" rx="6" fill="url(#" + ids.paper + ')"
+        <rect x="146" y="150" width="508" height="620" rx="6" fill={'url(#'+ids.paper+')'}
           stroke="#b9ae95" strokeWidth="3"/>
         <rect x="146" y="150" width="508" height="620" rx="6" fill="#fff" opacity="0.2"/>
         {/* área da imagem */}
@@ -146,7 +146,7 @@ export function Polaroid({ids, side}) {
         <path d="M176 180 h448 v120 q-220 90 -448 0 z" fill="#ffdca8" opacity="0.08"/>
         {/* faixa inferior para a legenda */}
         <rect x="176" y="632" width="448" height="110" fill="#f4efe2"/>
-        <rect x="176" y="632" width="448" height="110" fill="url(#" + ids.paperEdge + ')" opacity="0.5"/>
+        <rect x="176" y="632" width="448" height="110" fill={'url(#'+ids.paperEdge+')'} opacity="0.5"/>
         <path d="M176 632 h448" stroke="#c4b89c" strokeWidth="2"/>
         {/* cantos curvos e desgaste */}
         <path d="M146 770 q0 -4 6 -6 M654 150 q-4 0 -6 6" stroke="#000" strokeOpacity="0.16" strokeWidth="4" fill="none"/>
@@ -160,7 +160,7 @@ export function Polaroid({ids, side}) {
     <g>
       <CastShadow x={402} y={966} rx={252} ry={38}/>
       <g transform="rotate(1.6 400 566)">
-        <rect x="146" y="150" width="508" height="620" rx="6" fill="url(#" + ids.paper + ')"
+        <rect x="146" y="150" width="508" height="620" rx="6" fill={'url(#'+ids.paper+')'}
           stroke="#b9ae95" strokeWidth="3"/>
         <rect x="146" y="150" width="508" height="620" rx="6" fill="#fdfaf0" opacity="0.35"/>
         {/* sulcos de revelação */}
@@ -204,7 +204,7 @@ export function Cassette({ids, side}) {
       <CastShadow x={400} y={902} rx={252} ry={34}/>
       <g transform="rotate(-2 400 566)">
         {/* carcaça */}
-        <rect x="140" y="320" width="520" height="440" rx="14" fill="url(#" + ids.plastic + ')"
+        <rect x="140" y="320" width="520" height="440" rx="14" fill={'url(#'+ids.plastic+')'}
           stroke="#4b463f" strokeWidth="5"/>
         <rect x="140" y="320" width="520" height="440" rx="14" fill="#fff" opacity="0.08"/>
         {/* janela das fitas */}
@@ -257,7 +257,7 @@ export function Cassette({ids, side}) {
     <g>
       <CastShadow x={400} y={902} rx={252} ry={34}/>
       <g transform="rotate(1.4 400 566)">
-        <rect x="140" y="320" width="520" height="440" rx="14" fill="url(#" + ids.plastic + ')"
+        <rect x="140" y="320" width="520" height="440" rx="14" fill={'url(#'+ids.plastic+')'}
           stroke="#4b463f" strokeWidth="5"/>
         <rect x="140" y="320" width="520" height="440" rx="14" fill="#000" opacity="0.08"/>
         {/* fita exposta */}

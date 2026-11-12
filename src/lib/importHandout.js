@@ -35,7 +35,7 @@ function sizeToFit(width,height) {
   const scale=Math.min(1,1500/width,2200/height);
   return {width:Math.max(1,Math.round(width*scale)),height:Math.max(1,Math.round(height*scale))};
 }
-async function processImage(file) {
+async function processImage(file,transparent=false) {
   const url=URL.createObjectURL(file);
   try{
     const image=await new Promise((resolve,reject)=>{
@@ -47,9 +47,9 @@ async function processImage(file) {
     const dims=sizeToFit(image.naturalWidth,image.naturalHeight);
     const canvas=document.createElement('canvas');
     canvas.width=dims.width;canvas.height=dims.height;
-    const ctx=canvas.getContext('2d',{alpha:false});
+    const ctx=canvas.getContext('2d',{alpha:transparent});
     if(!ctx)throw new Error('Canvas indisponível neste navegador.');
-    ctx.fillStyle='#f0e6cf';ctx.fillRect(0,0,canvas.width,canvas.height);
+    if(!transparent){ctx.fillStyle='#f0e6cf';ctx.fillRect(0,0,canvas.width,canvas.height);}
     ctx.drawImage(image,0,0,canvas.width,canvas.height);
     return await toBlob(canvas);
   } finally {URL.revokeObjectURL(url);}
@@ -109,4 +109,9 @@ export async function prepareImport(file,side='front') {
 }
 export function uploadExtension(blob) {
   return blob.type==='image/webp'?'webp':blob.type==='image/jpeg'?'jpg':'png';
+}
+
+export async function prepareLayerImage(file) {
+  if(validateImport(file)!=='image')throw new Error('Escolha PNG, JPG ou WEBP para a camada.');
+  return processImage(file,true);
 }
