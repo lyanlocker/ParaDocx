@@ -1,0 +1,82 @@
+/* Elemental archive: atmospheric layers never intercept investigation controls. */
+.elemental-shell{--ink:#f0ede8;--muted:#b2ac9f;--accent:#d7bc85;--accent-rgb:215,188,133;--secondary:#bda56f;--surface:#151615;--deep:#0d0f0e;--line:#363831;--curve:12px;position:relative;isolation:isolate;background:var(--deep);color:var(--ink);min-height:100vh;transition:background .8s,color .4s}
+.elemental-shell[data-element=sangue]{--accent:#ff6677;--accent-rgb:255,66,88;--secondary:#a11835;--surface:#241116;--deep:#11080b;--line:#54212e;--muted:#c6a2aa;--curve:18px 5px 18px 5px}
+.elemental-shell[data-element=energia]{--accent:#df8bff;--accent-rgb:185,66,255;--secondary:#ff69bd;--surface:#1d112c;--deep:#0e0919;--line:#4c2d68;--muted:#c3acd7;--curve:3px 18px 3px 18px}
+.elemental-shell[data-element=medo]{--accent:#74e6ed;--accent-rgb:59,207,222;--secondary:#1d6d91;--surface:#0d2029;--deep:#070f16;--line:#244b59;--muted:#a3c6cf;--curve:4px}
+.elemental-shell[data-element=morte]{--accent:#c1c7cb;--accent-rgb:165,178,184;--secondary:#535c64;--surface:#141618;--deep:#050607;--line:#383d40;--muted:#a7afb4;--curve:2px 20px 2px 20px}
+.elemental-shell[data-element=conhecimento]{--accent:#f0cd70;--accent-rgb:223,175,62;--secondary:#977327;--surface:#211c10;--deep:#100e08;--line:#4f4326;--muted:#c3b793;--curve:2px}
+.element-atmosphere{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;color:var(--accent)}
+.atmosphere-haze{position:absolute;inset:-15%;background:radial-gradient(ellipse at 85% 20%,rgba(var(--accent-rgb),.12),transparent 45%),radial-gradient(ellipse at 10% 75%,rgba(var(--accent-rgb),.06),transparent 40%);animation:veil-drift 22s ease-in-out infinite alternate}
+.element-atmosphere>.element-sigil{position:absolute;width:460px;height:540px;right:-100px;top:20vh;opacity:.035;transform:rotate(-12deg)}
+.atmosphere-grain{position:absolute;inset:0;opacity:.12;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.22' d='M0 0h180v180H0z'/%3E%3C/svg%3E")}
+.atmosphere-lines{position:absolute;inset:0;opacity:.12}
+[data-element=sangue] .atmosphere-lines{background:repeating-conic-gradient(from 12deg at 100% 8%,transparent 0 8deg,rgba(172,25,47,.65) 8.1deg 8.5deg,transparent 8.7deg 21deg);mask-image:linear-gradient(90deg,transparent,#000);animation:archive-pulse 7s ease-in-out infinite}
+[data-element=energia] .atmosphere-lines{opacity:.12;background:repeating-linear-gradient(0deg,transparent 0 6px,#8a44ba55 7px 8px),linear-gradient(125deg,transparent 60%,#e949d4 60.1%,transparent 60.3%);animation:signal-drift 16s linear infinite}
+[data-element=medo] .atmosphere-haze{background:radial-gradient(ellipse at 80% 60%,#237f912f,transparent 50%),radial-gradient(ellipse at 0% 90%,#27719128,transparent 55%);filter:blur(25px);animation:veil-drift 18s ease-in-out infinite alternate}
+[data-element=medo] .atmosphere-lines{background:radial-gradient(circle at 75% 25%,transparent 0 180px,#65d7e8 181px,transparent 182px 210px,#65d7e8 211px,transparent 212px);opacity:.06}
+[data-element=morte] .atmosphere-orbit{position:absolute;right:-250px;top:5vh;width:800px;height:800px;border-radius:50%;background:repeating-radial-gradient(ellipse at 45% 46%,transparent 0 22px,#8d99961a 24px,transparent 26px 44px);transform:rotate(-25deg);mask-image:linear-gradient(90deg,transparent,#000);animation:spiral-turn 180s linear infinite}
+[data-element=conhecimento] .atmosphere-lines{opacity:.05;background:repeating-linear-gradient(0deg,transparent 0 79px,#dfbc68 80px 81px),repeating-linear-gradient(90deg,transparent 0 79px,#dfbc68 80px 81px);mask-image:linear-gradient(90deg,transparent,#000)}
+.element-sigil{width:100%;height:100%;display:block}
+.elemental-shell .sidebar{background:color-mix(in srgb,var(--surface) 94%,transparent);border-color:var(--line);z-index:1}
+.elemental-shell :is(.top-bar,.player-topbar){background:color-mix(in srgb,var(--deep) 88%,transparent);border-color:var(--line);backdrop-filter:blur(16px);color:var(--muted)}
+.elemental-shell :is(.brand-emblem,.primary){background:var(--accent);border-color:var(--accent);color:var(--deep)}
+.elemental-shell .primary:hover{filter:brightness(1.13)}
+.elemental-shell :is(.outline,.top-label,.page-switch button,.back-link){color:var(--accent);border-color:var(--line)}
+.elemental-shell .outline:hover{background:rgba(var(--accent-rgb),.1)}
+.elemental-shell :is(.eyebrow,.period,.case-symbol,.card-footer,.profile-text button,.player-doc-info small,.player-count){color:var(--accent)}
+.elemental-shell :is(.panel,.auth-card,.campaign-card,.doc-row,.seat-row,.editor-panel,.stats>div,.player-doc-card,.reader-transfer,.portal-hint,.empty){background:color-mix(in srgb,var(--surface) 94%,transparent);border-color:var(--line);border-radius:var(--curve);color:var(--ink)}
+.elemental-shell :is(.section-heading,.side-bottom,.editor-title,.layer-properties){border-color:var(--line)}
+.elemental-shell :is(.side-link,.side-label,.profile-text small,.brand small,.top-bar,.player-brand small,.player-heading p,.page-heading p,.panel>p,.library-intro,.master-players-intro,.seat-detail small,.doc-detail small,.stats small,.section-heading small,.editor-hint,.paper-help,.sheet-toolbar,.portal-hint){color:var(--muted)}
+.elemental-shell .side-link.current,.elemental-shell .side-link:hover{background:rgba(var(--accent-rgb),.09);color:var(--accent);box-shadow:inset 2px 0 var(--accent)}
+.elemental-shell :is(input,textarea,select){background:var(--deep);color:var(--ink);border-color:var(--line);color-scheme:dark}
+.elemental-shell :is(button,input,textarea,select):focus-visible{outline-color:var(--accent)}
+.elemental-shell label{color:var(--muted)}
+.elemental-shell :is(.mode-switch button.active,.page-switch button.chosen){background:var(--accent);color:var(--deep);border-color:var(--accent)}
+.elemental-shell .player-doc-info{border-top:1px solid var(--line);background:var(--surface)}
+.elemental-shell .player-doc-info>span{color:var(--muted)}
+.elemental-shell .player-doc-card:hover{border-color:var(--accent);box-shadow:0 16px 35px #0007,0 0 30px rgba(var(--accent-rgb),.08)}
+.elemental-shell .doc-sign{background:rgba(var(--accent-rgb),.1);color:var(--accent)}
+.elemental-shell .layer-list button{background:var(--deep);color:var(--ink);border-color:var(--line)}
+.elemental-shell .layer-list button.selected{border-color:var(--accent);background:rgba(var(--accent-rgb),.13)}
+.elemental-shell .layer-actions button{background:var(--deep);border-color:var(--line);color:var(--accent)}
+.elemental-shell .import-panel{background:var(--deep);border-color:var(--line)}
+.elemental-shell .file-input-label{background:rgba(var(--accent-rgb),.07);border-color:var(--line);color:var(--accent)}
+.elemental-shell .editor-stage{background:radial-gradient(ellipse at 50% 40%,rgba(var(--accent-rgb),.055),transparent 60%)}
+.elemental-shell .player-message{color:var(--ink)}
+.master-theme-control{margin:auto 4px 20px;padding:18px 8px 0}.master-theme-control small{display:block;color:var(--muted);font-size:10px;line-height:1.6;margin-top:9px}.master-theme-control+.side-bottom{margin-top:0}
+.element-picker{min-width:145px}.element-picker select{padding:10px;font-size:12px}.seat-sigil{display:block;width:46px;height:52px;flex-shrink:0}
+.element-hero{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:270px;margin:24px 0 30px;padding:38px 42px;overflow:hidden;border:1px solid var(--line);border-radius:var(--curve);background:linear-gradient(110deg,var(--surface),rgba(var(--accent-rgb),.045));box-shadow:0 25px 60px #0003}
+.element-hero:before{content:'';position:absolute;inset:9px;border:1px solid rgba(var(--accent-rgb),.08);pointer-events:none}
+.element-hero:after{content:'';position:absolute;top:0;left:0;width:85px;height:2px;background:var(--accent);box-shadow:0 0 24px var(--accent)}
+.element-hero-copy{position:relative;z-index:1;max-width:70%}.element-kicker{font:10px/1.6 'DM Sans',sans-serif;color:var(--accent);letter-spacing:2px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}.element-kicker i{height:3px;width:3px;border-radius:50%;background:currentColor}
+.element-hero h2{font-size:clamp(28px,3vw,44px);line-height:1.2;letter-spacing:-1.2px;margin:20px 0 13px;color:var(--ink)}
+.element-hero p{color:var(--muted);font-size:13px;line-height:1.7;max-width:400px;margin:0 0 30px}
+.element-signature{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}.element-signature b{font-weight:400;color:var(--accent);padding:0 8px}
+.hero-sigil{position:relative;color:var(--accent);width:190px;height:210px;flex-shrink:0;margin:0 16px}.hero-sigil>.element-sigil{position:relative;padding:18px;filter:drop-shadow(0 0 16px rgba(var(--accent-rgb),.25))}
+.sigil-orbit{position:absolute;inset:6px -4px;border:1px solid rgba(var(--accent-rgb),.2);border-radius:50%;transform:rotate(-20deg);box-shadow:0 0 0 9px rgba(var(--accent-rgb),.025),0 0 0 25px rgba(var(--accent-rgb),.02)}
+.sigil-orbit:before,.sigil-orbit:after{content:'';position:absolute;inset:17px -17px;border:1px solid rgba(var(--accent-rgb),.14);border-radius:50%;transform:rotate(55deg)}
+.sigil-orbit:after{inset:-20px 16px;transform:rotate(-30deg)}
+[data-element=sangue] .hero-sigil{animation:archive-pulse 5s ease-in-out infinite}[data-element=sangue] .element-hero{background:radial-gradient(ellipse at 90% 50%,#630e2555,transparent 50%),linear-gradient(120deg,#231015,#150b0e)}
+[data-element=energia] .element-hero{background:linear-gradient(115deg,#20102e,transparent 75%),repeating-linear-gradient(0deg,transparent 0 5px,#b54ada08 5px 6px),linear-gradient(140deg,#190f23,#281039)}
+[data-element=energia] .sigil-orbit{border-radius:5px;transform:rotate(35deg);border-color:#ff69bd55}[data-element=energia] .hero-sigil{filter:drop-shadow(4px 0 0 #ed52aa55)}
+[data-element=medo] .hero-sigil>.element-sigil{animation:veil-breathe 9s ease-in-out infinite}[data-element=medo] .element-hero:before{border-style:dashed;border-color:#73e0e51c}
+[data-element=morte] .sigil-orbit{animation:spiral-turn 90s linear infinite;border-style:dashed}[data-element=morte] .element-hero{background:radial-gradient(ellipse at 85% 50%,#272c2f77,transparent 50%),#0b0c0d}
+[data-element=conhecimento] .sigil-orbit{border-radius:0;transform:rotate(45deg)}[data-element=conhecimento] .element-hero:before{border:3px double #c5a34f25}
+.preview-affinity-bar{display:flex;align-items:center;gap:16px;max-width:650px;margin:0 auto 20px;padding:14px 16px;border:1px solid var(--line);background:var(--surface);border-radius:8px}.preview-affinity-bar label{min-width:190px}.preview-affinity-bar small{color:var(--muted);font-size:11px;line-height:1.5}
+.reveal-rules{border:1px solid var(--line);border-radius:8px;margin:20px 0;padding:14px;display:grid;gap:15px}.reveal-rules legend{color:var(--accent);font-size:12px;padding:0 5px}.reveal-rules small{font-size:11px;line-height:1.6;color:var(--muted)}.checkbox-label{display:flex;align-items:center;gap:9px}.checkbox-label input{width:17px;height:17px;accent-color:var(--accent)}
+.document-image-layer{position:absolute;z-index:2;touch-action:none;cursor:inherit}.document-image-layer img{width:100%;height:100%;display:block;pointer-events:none}.document-image-layer.is-selected{outline:2px dashed #9d5cec;outline-offset:4px}.image-layer-placeholder{display:grid;place-items:center;height:100%;font-size:12px;color:#684389;background:#d9cbe488}.uv-editable .secret-image{outline:1px dashed #9062bd;opacity:.6}.uv-content .secret-image{filter:drop-shadow(0 0 5px #697fff99)}.image-layer-upload{margin-top:16px}
+@keyframes archive-pulse{0%,100%{opacity:.75;filter:drop-shadow(0 0 4px #ff365522)}50%{opacity:1;filter:drop-shadow(0 0 18px #ff365550)}}
+@keyframes veil-drift{from{transform:translate(-2%,1%) scale(1)}to{transform:translate(4%,-3%) scale(1.08)}}
+@keyframes veil-breathe{0%,100%{opacity:.4;filter:blur(1px) drop-shadow(0 0 14px #59dae5)}50%{opacity:1;filter:blur(0) drop-shadow(0 0 24px #59dae5)}}
+@keyframes signal-drift{from{background-position:0 0}to{background-position:0 160px}}
+@keyframes spiral-turn{to{transform:rotate(360deg)}}
+@media(max-width:1000px){.elemental-shell .seat-row{flex-wrap:wrap}.seat-row .element-picker{flex:1;max-width:210px}.elemental-shell .seat-actions{margin-left:auto}.hero-sigil{width:150px;height:180px;margin:0}.element-hero{padding:30px}.master-theme-control{margin-top:15px}}
+@media(max-width:700px){.element-hero{min-height:250px;padding:25px;margin:20px 0}.element-hero-copy{max-width:100%}.hero-sigil{position:absolute;right:-24px;bottom:15px;width:150px;opacity:.23}.element-hero h2{font-size:30px;max-width:300px}.element-hero p{max-width:260px}.element-kicker{font-size:8px;letter-spacing:1.5px}.element-signature{font-size:8px}.elemental-shell .seat-actions{width:100%;margin:8px 0 0;flex-wrap:wrap}.preview-affinity-bar{align-items:stretch;flex-direction:column;gap:8px}.master-theme-control{width:100%;margin:10px 0;padding:10px}.master-theme-control small{display:none}.element-atmosphere>.element-sigil{width:300px}.elemental-shell .player-topbar{position:relative}.elemental-shell .top-label{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.elemental-shell *,.elemental-shell *:before,.elemental-shell *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.uv-content.uv-editable .document-image-layer{pointer-events:auto;cursor:grab}
+.elemental-shell .handout-library .template-preview{background:linear-gradient(135deg,var(--surface),var(--deep));border-color:var(--line)}
+.elemental-shell .template-preview .template-card-info small{color:var(--accent)}
+/* Keep the blackout inside the elemental stacking context so the active reader
+   and its controls can rise above it. */
+body.paradocx-uv-mode:has(.elemental-shell)::before{display:none}
+body.paradocx-uv-mode .elemental-shell::after{content:'';position:fixed;inset:0;z-index:90;background:rgba(1,3,11,.89);pointer-events:none;backdrop-filter:blur(1px)}

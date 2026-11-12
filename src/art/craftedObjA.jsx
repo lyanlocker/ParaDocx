@@ -20,10 +20,10 @@ export function Notebook({ids, side}) {
       <CastShadow x={402} y={1024} rx={266} ry={40}/>
       <g transform="rotate(-1.6 400 566)">
         {/* lombada */}
-        <rect x="112" y="112" width="580" height="892" rx="24" fill="url(#" + ids.leatherDark + ')'
+        <rect x="112" y="112" width="580" height="892" rx="24" fill={'url(#'+ids.leatherDark+')'}
           stroke="#170c07" strokeWidth="6"/>
         {/* capa */}
-        <rect x="124" y="118" width="566" height="882" rx="20" fill="url(#" + ids.leather + ')'
+        <rect x="124" y="118" width="566" height="882" rx="20" fill={'url(#'+ids.leather+')'}
           stroke="#1d100a" strokeWidth="4"/>
         {/* brilho do couro na diagonal */}
         <path d="M124 118 h566 v300 q-283 150 -566 0 z" fill="#c98f57" opacity="0.09"/>
@@ -94,10 +94,10 @@ export function Notebook({ids, side}) {
     <g>
       <CastShadow x={404} y={1026} rx={268} ry={40}/>
       <g transform="rotate(1.2 400 566)">
-        <rect x="112" y="112" width="580" height="892" rx="24" fill="url(#" + ids.leatherDark + ')"
+        <rect x="112" y="112" width="580" height="892" rx="24" fill={'url(#'+ids.leatherDark+')'}
           stroke="#170c07" strokeWidth="6"/>
         {/* bloco de páginas */}
-        <rect x="124" y="122" width="566" height="874" rx="16" fill="url(#" + ids.paper + ')"
+        <rect x="124" y="122" width="566" height="874" rx="16" fill={'url(#'+ids.paper+')'}
           stroke="#b7ab8e" strokeWidth="3"/>
         {/* borda do bloco, com linhas de folhas */}
         <g opacity="0.5">
@@ -108,7 +108,7 @@ export function Notebook({ids, side}) {
         </g>
         {/* faixa de papelão na lombada */}
         <rect x="124" y="122" width="96" height="874" fill="#cbbd99"/>
-        <rect x="124" y="122" width="96" height="874" fill="url(#" + ids.paperEdge + ')" opacity="0.5"/>
+        <rect x="124" y="122" width="96" height="874" fill={'url(#'+ids.paperEdge+')'} opacity="0.5"/>
         <path d="M220 122 V996" stroke="#a8573d" strokeOpacity="0.4" strokeWidth="2.6"/>
         {/* pauta */}
         <g stroke="#9fb0c9" strokeOpacity="0.45" strokeWidth="1.5">
@@ -161,11 +161,11 @@ export function Computer({ids, side}) {
     <g>
       <CastShadow x={400} y={1014} rx={300} ry={40}/>
       {/* pedestal */}
-      <path d="M300 880 h200 l40 118 h-280 z" fill="url(#" + ids.metalDark + ')" stroke="#0d0b09" strokeWidth="5"/>
-      <rect x="196" y="986" width="408" height="34" rx="16" fill="url(#" + ids.metalDark + ')"
+      <path d="M300 880 h200 l40 118 h-280 z" fill={'url(#'+ids.metalDark+')'} stroke="#0d0b09" strokeWidth="5"/>
+      <rect x="196" y="986" width="408" height="34" rx="16" fill={'url(#'+ids.metalDark+')'}
         stroke="#0d0b09" strokeWidth="5"/>
       {/* gabinete */}
-      <rect x="86" y="146" width="628" height="752" rx="34" fill="url(#" + ids.plastic + ')"
+      <rect x="86" y="146" width="628" height="752" rx="34" fill={'url(#'+ids.plastic+')'}
         stroke="#0c0a08" strokeWidth="7"/>
       <rect x="86" y="146" width="628" height="752" rx="34" fill="#fff" opacity="0.06"/>
       {/* fresta de ventilação no topo */}
@@ -177,7 +177,7 @@ export function Computer({ids, side}) {
       {/* moldura do CRT */}
       <rect x="110" y="174" width="580" height="572" rx="30" fill="#1d1916" stroke="#000" strokeWidth="9"/>
       {/* vidro */}
-      <rect x="118" y="182" width="564" height="556" rx="26" fill="url(#" + ids.ink + ')'
+      <rect x="118" y="182" width="564" height="556" rx="26" fill={'url(#'+ids.ink+')'}
         stroke="#000" strokeWidth="8"/>
       {/* brilho do fósforo */}
       <g filter={'url(#' + ids.glow + ')'} opacity="0.72">
@@ -202,7 +202,7 @@ export function Computer({ids, side}) {
       {/* reflexo do vidro */}
       <path d="M150 214 q120 -26 250 -12 l-40 320 q-110 40 -220 -10 z" fill="#dfffe9" opacity="0.06"/>
       {/* moldura inferior, teclado */}
-      <rect x="130" y="770" width="540" height="86" rx="14" fill="url(#" + ids.metalDark + ')"/>
+      <rect x="130" y="770" width="540" height="86" rx="14" fill={'url(#'+ids.metalDark+')'}/>
       <g fill="#3f3833" stroke="#6b6259" strokeWidth="1.6">
         <rect x="152" y="796" width="104" height="26" rx="6"/>
         <rect x="272" y="796" width="76" height="26" rx="6"/>
@@ -225,7 +225,7 @@ export function Computer({ids, side}) {
       <CastShadow x={400} y={1014} rx={300} ry={40}/>
       <path d="M300 880 h200 l40 118 h-280 z" fill="#1d1a17" stroke="#0c0a08" strokeWidth="5"/>
       <rect x="196" y="986" width="408" height="34" rx="16" fill="#1d1a17" stroke="#0c0a08" strokeWidth="5"/>
-      <rect x="86" y="146" width="628" height="752" rx="34" fill="url(#" + ids.metalDark + ')"
+      <rect x="86" y="146" width="628" height="752" rx="34" fill={'url(#'+ids.metalDark+')'}
         stroke="#0c0a08" strokeWidth="7"/>
       {/* tampa com parafusos */}
       <g fill="#454b50" stroke="#24292c" strokeWidth="2">

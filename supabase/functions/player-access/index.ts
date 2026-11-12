@@ -1,6 +1,8 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2.57.0';
 
+import {filterPages,resolveAssetPath} from './visibility.js';
+
 const url = Deno.env.get('SUPABASE_URL');
 const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 if (!url || !secret) throw new Error('Missing Supabase runtime configuration');
@@ -43,7 +45,7 @@ Deno.serve(async (req) => {
     if (!tokenPattern.test(token)) return json({error:'Link de jogador inválido'},401,origin);
     const tokenHash = await hashToken(token);
     const {data:seat,error:seatErr} = await admin.from('player_seats')
-      .select('id,campaign_id,display_name')
+      .select('id,campaign_id,display_name,affinity')
       .eq('token_hash',tokenHash).eq('enabled',true).maybeSingle();
     if (seatErr) throw seatErr;
     if (!seat) return json({error:'Este link foi revogado ou é inválido'},401,origin);
@@ -58,11 +60,8 @@ Deno.serve(async (req) => {
         .eq('holder_seat_id',seat.id).eq('is_published',true).maybeSingle();
       if (docError) throw docError;
       if (!doc) return json({error:'Documento indisponível para este jogador'},403,origin);
-      const path=doc.pages?.backgrounds?.[body.side];
-      if (typeof path !== 'string' || !path.startsWith(seat.campaign_id+'/') ||
-          !/^[a-f0-9-]{36}\/[a-f0-9-]{36}\.(webp|png|jpg)$/i.test(path)) {
-        return json({error:'Esta face não tem arquivo importado'},404,origin);
-      }
+      const path=resolveAssetPath(doc,seat,body.side,body.layer_id);
+      if (!path) return json({error:'Imagem indisponível para este jogador'},404,origin);
       const downloaded=await admin.storage.from('handout-assets').download(path);
       if (downloaded.error || !downloaded.data) return json({error:'Imagem indisponível'},404,origin);
       const type=downloaded.data.type;
@@ -95,9 +94,9 @@ Deno.serve(async (req) => {
     if (campaign.error || players.error || documents.error) throw (campaign.error||players.error||documents.error);
     return json({
       campaign:{name:campaign.data.name},
-      player:{id:seat.id,name:seat.display_name},
+      player:{id:seat.id,name:seat.display_name,affinity:seat.affinity},
       players:players.data.filter(p=>p.id!==seat.id),
-      documents:documents.data,
+      documents:documents.data.map(doc=>({...doc,pages:filterPages(doc.pages,seat.affinity)})),
     },200,origin);
   } catch (_error) {
     return json({error:'Não foi possível abrir o arquivo agora'},500,origin);

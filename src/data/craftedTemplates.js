@@ -138,7 +138,7 @@ export const craftedTemplates = [
       S('Ampliar 12×. A imagem do quadro 31 só aparece com luz ultravioleta.', 20, 84, 60, 12, 'body')
     ],
     secrets: [
-      S('QUADRO 31: A MARCA DE ÁGUA', 20, 95, 60, 12, 'secret', 'uv')
+      S('QUADRO 31: A MARCA DE ÁGUA', 20, 93, 60, 12, 'secret', 'uv')
     ],
     premiumArtwork: true
   },
