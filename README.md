@@ -58,7 +58,7 @@ Use `npm test` para verificar modelos e tipos de importação; `npm run build` v
 In a campaign, the master selects each player's affinity beside their name. The
 player portal receives the saved affinity on its next refresh (up to 12 seconds),
 including while reading a document. Existing players default to **Sem afinidade**.
-Sangue, Energia, Medo, Morte and Conhecimento each have a vector sigil, palette,
+Sangue, Energia, Medo, Morte and Conhecimento each have a reference-faithful sigil, palette,
 background composition, frames and restrained animation; reduced-motion is honored.
 The master's atmosphere selector is cosmetic and never changes a player's affinity.
 
@@ -91,3 +91,21 @@ affinity combinations, both sides and asset authorization. Database verification
 uses a rolled-back fixture to test master updates and outsider rejection. Browser
 component QA covers atmospheric changes, image visibility and UV. Full production
 login/upload/transfer with real player accounts still requires a session test.
+
+### Reference symbols and automatic affinity clues
+
+The five elemental silhouettes are displayed from the master's original reference
+in `src/assets/element-symbols-reference.png`. SVG viewports and luminance masks
+preserve the original strokes; only their UI tint changes. The source stays intact.
+
+Choosing an element under **Afinidade necessária** clears the layer's UV requirement,
+including legacy `kind:uv` text. Matching players see the text or image immediately.
+The master can separately enable **Exigir também luz UV (opcional)** afterward.
+Existing saved combinations remain intact until edited. Affinity text uses the
+corresponding elemental ink in the editor and reader, including UV mode. Image
+colors are preserved. A subtle light halo keeps dark ink legible on dark documents.
+
+Validation: browser component checks verified the five source silhouettes, legacy
+UV-to-affinity selection, automatic red text and images with UV off, disappearance
+on mismatched affinity, and purple text with UV explicitly enabled. Production
+account login and upload flows were not changed or exercised in this patch.

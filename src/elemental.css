@@ -80,3 +80,13 @@
    and its controls can rise above it. */
 body.paradocx-uv-mode:has(.elemental-shell)::before{display:none}
 body.paradocx-uv-mode .elemental-shell::after{content:'';position:fixed;inset:0;z-index:90;background:rgba(1,3,11,.89);pointer-events:none;backdrop-filter:blur(1px)}
+
+/* Elemental ink wins over template and UV ink, including legacy UV layers. */
+.document-sheet .document-layer.affinity-text,
+.document-sheet .uv-content.uv-editable .document-layer.affinity-text,
+.document-sheet .uv-content.uv-revealed .document-layer.affinity-text{
+ color:var(--affinity-ink)!important;
+ text-shadow:0 0 2px #ffffffc9,0 0 5px #ffffff80;
+}
+.affinity-ink-note{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--text-muted,#c1c7cb)}
+.affinity-ink-note i{width:12px;height:12px;border-radius:50%;border:1px solid #ffffff60;flex-shrink:0}

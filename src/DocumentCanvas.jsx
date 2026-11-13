@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {canSeeLayer,requiresUV} from './lib/elements.js';
+import {canSeeLayer,requiresUV,getAffinityInk} from './lib/elements.js';
 import HandoutArt from './HandoutArt.jsx';
 
 /**
@@ -63,11 +63,11 @@ export default function DocumentCanvas({
     const styleName=String(layer.style||'body').replace(/[^a-z]/g,'');
     const fontSize=Math.max(10,Math.min(44,Number(layer.fontSize)||18));
     return <div key={layer.id} className={'document-layer layer-'+styleName+
-      (requiresUV(layer)?' secret-text':'')+
+      (requiresUV(layer)?' secret-text':'')+(getAffinityInk(layer)?' affinity-text':'')+
       (isEditing&&selected===layer.id?' is-selected':'')}
       onPointerDown={isEditing?e=>startDrag(e,layer):undefined}
       style={{left:(Number(layer.x)||0)+'%',top:(Number(layer.y)||0)+'%',
-        width:(Number(layer.width)||74)+'%',
+        width:(Number(layer.width)||74)+'%', '--affinity-ink':getAffinityInk(layer),
         fontSize:'clamp(10px,'+(fontSize/5).toFixed(2)+'vw,'+fontSize+'px)'}}
     >{layer.text}</div>;
   };
