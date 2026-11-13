@@ -8,3 +8,12 @@ export const elements = [
  {id:'conhecimento',name:'Conhecimento',title:'Nada está aqui por acaso.',description:'Um traço. Uma ausência. Um significado que espera ser decifrado.',tag:'DECIFRE O IMPOSSÍVEL',color:'#f0cd70'},
 ];
 export const getElement=id=>elements.find(e=>e.id===id)||elements[0];
+
+// Ink is distinct from the light UI accent so clues remain legible on paper.
+export const affinityInk={sangue:'#c51d35',energia:'#a02cce',medo:'#008fa8',morte:'#17191d',conhecimento:'#a47a00'};
+export const getAffinityInk=layer=>Object.hasOwn(affinityInk,layer?.affinity)?affinityInk[layer.affinity]:undefined;
+
+// Selecting an affinity means immediate revelation. UV is a separate opt-in.
+export function affinitySelection(layer,affinity){
+ return {affinity,...(Object.hasOwn(affinityInk,affinity)?{uv:false,...(layer.kind==='uv'?{kind:'normal'}:{})}:{})};
+}

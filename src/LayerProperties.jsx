@@ -1,5 +1,5 @@
 import React from 'react';
-import {requiresUV} from './lib/elements.js';
+import {requiresUV,affinitySelection,getAffinityInk} from './lib/elements.js';
 import {ElementPicker} from './ElementAtmosphere.jsx';
 
 const styles=[
@@ -32,9 +32,11 @@ export default function LayerProperties({layer,onChange,onDelete}){
         <input type="range" min="0.35" max="1" step="0.05" value={layer.opacity??1}
           onChange={e=>onChange({opacity:Number(e.target.value)})}/></label></>}
     {!isCover&&<fieldset className="reveal-rules"><legend>Condições de revelação</legend>
-      <label className="checkbox-label"><input type="checkbox" checked={requiresUV(layer)} onChange={e=>onChange({uv:e.target.checked,...(layer.kind==='uv'?{kind:'normal'}:{})})}/> Exigir luz UV</label>
-      <ElementPicker label="Afinidade necessária" value={layer.affinity} onChange={affinity=>onChange({affinity})}/>
-      <small>{requiresUV(layer)?'Só aparece dentro do feixe UV. ': 'Visível sem lanterna. '}{layer.affinity&&layer.affinity!=='none'?'Apenas jogadores com a afinidade escolhida.':'Disponível para qualquer afinidade.'}</small>
+      <ElementPicker label="Afinidade necessária" value={layer.affinity} onChange={affinity=>onChange(affinitySelection(layer,affinity))}/>
+      <small>{layer.affinity&&layer.affinity!=='none'?'A afinidade revela esta camada automaticamente. Selecionar um elemento desativa a exigência de UV.':'Disponível para qualquer afinidade.'}</small>
+      <label className="checkbox-label"><input type="checkbox" checked={requiresUV(layer)} onChange={e=>onChange({uv:e.target.checked,...(layer.kind==='uv'?{kind:'normal'}:{})})}/> Exigir também luz UV (opcional)</label>
+      <small>{requiresUV(layer)?'UV ativado: esta camada só aparece dentro do feixe, respeitando a afinidade escolhida.':'Revelação automática, sem precisar ligar a lanterna.'}</small>
+      {!isImage&&getAffinityInk(layer)&&<span className="affinity-ink-note"><i style={{background:getAffinityInk(layer)}}/> O texto usa a cor do elemento.</span>}
     </fieldset>}
     <div className="position-row">
       <label>Horizontal (%)<input type="number" min="0" max="94" value={Math.round(layer.x||0)}
