@@ -8,7 +8,7 @@ Plataforma para criar documentos investigativos de RPG e gerenciar inventários 
 - **Jogadores:** não criam conta, não entram com e-mail nem senha. O mestre cria uma vaga com nome e copia um link individual secreto.
 - **Links:** cada link contém um segredo aleatório de 256 bits no fragmento da URL (`#/player/<token>`). O banco armazena apenas SHA-256 do token. O mestre pode reemitir/revogar links.
 - **Posse:** documentos pertencem a uma única vaga de jogador; a entrega para outro jogador atualiza a posse atomicamente e remove o acesso anterior.
-- **Mecânicas:** área reservada, sem funcionalidade ativa.
+- **Mecânicas:** módulo Dilema das Seis Portas, com sessões persistentes, cinco enigmas e inventário de recompensas.
 
 ## Editor
 Modelos com campos rápidos e edição livre por camadas, frente e verso, mensagens reveladas pela luz negra. Ao ativar a lanterna, a interface fica escura e um feixe azul-violeta acompanha mouse e toque, iluminando apenas a região examinada.
@@ -109,3 +109,45 @@ Validation: browser component checks verified the five source silhouettes, legac
 UV-to-affinity selection, automatic red text and images with UV off, disappearance
 on mismatched affinity, and purple text with UV explicitly enabled. Production
 account login and upload flows were not changed or exercised in this patch.
+
+## Dilema das Seis Portas (Jianghu)
+
+O mestre abre **Mecânicas** dentro de uma campanha, cria uma sessão, seleciona
+seis investigadores por ordem (três para cada lado da prova Morte), importando o
+arquivo JSON **privado** fornecido ao mestre com as respostas e os recortes
+originais dos sigilos. O arquivo não pertence ao repositório público, ao bundle
+Vite nem a arquivos de configuração públicos. A importação é enviada somente
+ao endpoint autenticado do mestre e armazenada em uma tabela não acessível aos
+clientes. Selecione a sessão e clique em **Tornar esta sessão ativa**; abra cada
+prova pelo painel. Jogadores acessam **Mecânicas** usando seus links individuais.
+
+- Sangue: quatro válvulas, validação individual e fila de sinais acionada pelo mestre.
+- Morte: controle de cinco fileiras físicas e frase cooperativa de quinze posições;
+  monte as cartas no Roblox na disposição fornecida no guia privado.
+- Conhecimento: 26 sigilos recortados do alfabeto e conferência por posição.
+- Energia: painel independente de seis esferas, intertravamentos e três cliques.
+- Medo: quatro documentos de recompensa entregues pelo mestre, tabuleiro compartilhado.
+
+O backend usa o mesmo serviço `player-access` para autenticar o token individual
+ou JWT válido do proprietário da campanha. O cliente recebe uma projeção da
+atividade, nunca a configuração completa. O estado e as recompensas são gravados
+atomicamente com uma versão para detectar concorrência. A sessão de treinamento
+tem seu próprio estado e os papéis de teste ficam ocultos fora dela. O áudio usa
+três WAV originais e deve ser habilitado pelo jogador. Não modifica fichas de
+combate nem requer integração com Roblox.
+
+### Publicação e testes
+
+1. Aplique a migration `20261121190639_dilema_seis_portas.sql` ao banco ParaDocx
+   antes de implantar a Edge Function, pois a função consulta as novas tabelas e
+   coluna de documentos.
+2. Implante `player-access` com `index.ts`, `visibility.js`, `mechanics.js` e
+   `mechanics-api.js`, mantendo `verify_jwt=false` (a função autentica tanto o
+   token individual quanto o JWT do mestre internamente). Não exponha a service role.
+3. Publique o frontend Vercel e teste em uma sessão de treinamento com dois links
+   de jogador. Valide sons, reconexão, transferência, pausa, reset e precedência
+   entre sessão real e treinamento. Confirme que jogadores não recebem gabaritos.
+
+`npm test` inclui testes com dados artificiais para cada prova, as 216 sequências
+de Energia, controle de acesso, duplicação de envios e reset isolado. Para validar
+o bundle completo, execute `npm run build` com as variáveis públicas configuradas.

@@ -10,6 +10,7 @@ import {elements,getElement,requiresUV} from './lib/elements.js';
 import {ElementAtmosphere,ElementHero,ElementSigil,ElementPicker} from './ElementAtmosphere.jsx';
 import PlayerPortal from './PlayerPortal.jsx';
 import MasterSetup from './MasterSetup.jsx';
+import {MasterMechanics} from './Mechanics.jsx';
 import {masterAuth} from './lib/masterAuth.js';
 
 const readPlayerToken = () => (window.location.hash.match(/^#\/player\/([a-f0-9]{64})$/) || [])[1] || '';
@@ -437,7 +438,7 @@ export default function App() {
             <button className="danger" aria-label="Excluir documento" onClick={()=>deleteDocument(d)}>×</button>
           </div></div>)}{documents.length===0&&<div className="empty">Escolha um modelo e crie seu primeiro documento.</div>}</div>
       </section> :
-      screen==='mechanics' ? <section className="mechanics"><span className="eyebrow">MÓDULO EXPERIMENTAL</span><div className="mystery-icon">✧</div><h1>A próxima peça<br/><em>do mistério.</em></h1><p>Espaço reservado para enigmas e mecanismos interativos que criaremos juntos.</p><div className="coming">◈ MÓDULO INATIVO</div><button className="outline" onClick={()=>setScreen('campaign')}>← Voltar aos documentos</button></section> :
+      screen==='mechanics' ? (isMaster?<MasterMechanics key={campaign.id} campaign={campaign} players={players} onDocumentsChanged={()=>refreshCampaign(campaign.id)}/>:<div className="empty">Área reservada ao mestre.</div>) :
       ['editor','viewer'].includes(screen) ? <section className="workspace"><div className="workspace-heading"><button className="back-link" onClick={()=>setScreen('campaign')}>← Arquivo</button><div><span className="eyebrow">{screen==='editor'?'ESTÚDIO DE DOCUMENTOS':'LEITOR DE EVIDÊNCIAS'}</span><h2>{title}</h2></div>{screen==='editor'&&<button className="primary" onClick={saveDocument} disabled={working}>{working?'Salvando...':'Salvar documento ↗'}</button>}</div>
         <div className={'workspace-grid '+(screen==='viewer'?'view-only':'')}>
           {screen==='editor'&&<aside className="editor-panel"><div className="editor-title">ESTÚDIO DE DOCUMENTOS <span>✧</span></div>
