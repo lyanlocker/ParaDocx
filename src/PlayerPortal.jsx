@@ -5,6 +5,7 @@ import DocumentCanvas from './DocumentCanvas.jsx';
 import {requiresUV} from './lib/elements.js';
 import {ElementAtmosphere,ElementHero} from './ElementAtmosphere.jsx';
 import HandoutArt from './HandoutArt.jsx';
+import {PlayerMechanics} from './Mechanics.jsx';
 
 /** Miniatura fiel do documento: arte + textos na mesma escala da folha real. */
 function DocPreview({document}) {
@@ -88,6 +89,7 @@ const call = async (token,action,other={}) => {
 };
 export default function PlayerPortal({token}){
   const [state,setState]=useState(null),[error,setError]=useState(''),[selected,setSelected]=useState(null),[side,setSide]=useState('front'),[target,setTarget]=useState(''),[busy,setBusy]=useState(false),[notice,setNotice]=useState('');
+  const [tab,setTab]=useState('inventory');
   const document=state?.documents?.find(d=>d.id===selected);
   useEffect(()=>{
     let alive=true;
@@ -97,7 +99,7 @@ export default function PlayerPortal({token}){
         if(alive){setState(result);setError('');}
       } catch(e){if(alive){setError(e.message);setState(null);}}
     }
-    setSelected(null);setState(null);setError('');reload();
+    setSelected(null);setTab('inventory');setState(null);setError('');reload();
     const onVisibility=()=>{if(!window.document.hidden)reload();};
     window.document.addEventListener('visibilitychange',onVisibility);
     const interval=setInterval(()=>{if(!window.document.hidden)reload();},12000);
@@ -122,7 +124,9 @@ export default function PlayerPortal({token}){
       <>
         <div className="eyebrow">CAMPANHA / {state.campaign.name.toUpperCase()}</div>
         <div className="player-heading"><div><h1>Olá, {state.player.name}<span className="period">.</span></h1><p>{document?'Examine todas as pistas deste documento.':'Aqui estão os documentos que o mestre entregou a você.'}</p></div><span className="player-count">▤ {state.documents.length} DOCUMENTO(S)</span></div>
-        {!document&&<ElementHero element={state.player.affinity} name={state.player.name}/>}
+        <nav className="mk-portal-tabs" aria-label="Navegação do investigador"><button className="outline" aria-pressed={tab==='inventory'} onClick={()=>setTab('inventory')}>▣ Inventário</button><button className="outline" aria-pressed={tab==='mechanics'} onClick={()=>{setTab('mechanics');setSelected(null);}}>♧ Mecânicas</button></nav>
+        <PlayerMechanics key={state.player.id} token={token} playerId={state.player.id} visible={tab==='mechanics'}/>
+        {tab==='inventory'&&<>{!document&&<ElementHero element={state.player.affinity} name={state.player.name}/>}
         {notice&&<div className="portal-notice">{notice}<button onClick={()=>setNotice('')}>×</button></div>}
         {document ? <div className="player-reader">
           <div className="reader-nav"><button className="outline" onClick={()=>{setSelected(null);setTarget('')}}>← Meu inventário</button><h2>{document.title}</h2></div>
@@ -135,7 +139,7 @@ export default function PlayerPortal({token}){
           <div className="player-doc-grid">{state.documents.map(d=><button className="player-doc-card" key={d.id} onClick={()=>{setSelected(d.id);setSide('front')}}><DocPreview document={d}/><div className="player-doc-info"><span>DOCUMENTO ENCONTRADO</span><h3>{d.title}</h3><small>EXAMINAR DOCUMENTO ↗</small></div></button>)}</div>
           {state.documents.length===0&&<div className="empty">Seu inventário está vazio. Aguarde o mestre entregar uma pista.</div>}
           <div className="portal-hint">Seu acesso é individual. Guarde este link: ele funciona como a chave do seu arquivo. Se precisar de outro, peça ao mestre para gerar um novo.</div>
-        </>}
+        </>}</>}
       </>}
     </main>
   </div>;
