@@ -1,4 +1,4 @@
-import {createState,validateConfig,transition,playerView,reconcile,stages} from './mechanics.js';
+import {createState,validateConfig,transition,playerView,reconcile,normalizeControls,stages} from './mechanics.js';
 
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -16,7 +16,7 @@ async function masterView(db,row,seats){
  if(!row)return {session:null};
  const docs=await papers(db,row);const valid=row.participants.filter(id=>seats.some(s=>s.id===id));
  const p=checked(await db.from('mechanic_presence').select('seat_id,last_seen').eq('session_id',row.id));
- return {session:{id:row.id,name:row.name,training:row.training,isActive:row.active,participants:row.participants,version:row.version,state:reconcile(structuredClone(row.state),docs,valid),docs,presence:p,answers:{blood:row.config.blood,path:row.config.path,phrase:row.config.phrase,words:row.config.glyphs.map(g=>({id:g.id,letter:g.letter,image:g.image})),fear:row.config.fear}}};
+ return {session:{id:row.id,name:row.name,training:row.training,isActive:row.active,participants:row.participants,version:row.version,state:reconcile(normalizeControls(structuredClone(row.state)),docs,valid),docs,presence:p,hasCards:!!row.config.cards,answers:{blood:row.config.blood,path:row.config.path,phrase:row.config.phrase,words:row.config.glyphs.map(g=>({id:g.id,letter:g.letter,image:g.image})),fear:row.config.fear}}};
 }
 export async function handleMechanics(db,body,actor){
  const campaign=actor.campaign;const master=actor.master;

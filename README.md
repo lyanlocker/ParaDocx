@@ -136,6 +136,25 @@ tem seu próprio estado e os papéis de teste ficam ocultos fora dela. O áudio 
 três WAV originais e deve ser habilitado pelo jogador. Não modifica fichas de
 combate nem requer integração com Roblox.
 
+### Controle de rodadas e sinais
+
+- Sangue: os três sinais de suspense são sintetizados no navegador. Cada jogador
+  deve clicar em **Ativar e testar áudio** uma vez. O resultado textual é exclusivo
+  do mestre; a conclusão da prova é manual.
+- Morte: o mestre revela uma fileira de cartas, designa um selecionador do lado A
+  e confere a escolha. O lado B recebe um número de conferências por pessoa em
+  cada rodada; abrir uma nova rodada preserva as palavras confirmadas.
+- Conhecimento: libere uma palavra por vez e escolha os participantes autorizados.
+  Cada participante tem três conferências por rodada; os sigilos já confirmados
+  permanecem válidos. Libere a palavra seguinte após concluir a atual.
+- Energia: autorize os investigadores que podem usar o painel; retirar autorização
+  preserva o estado individual. Os intertravamentos não têm explicações no botão.
+
+Os controles começam bloqueados, inclusive em sessões anteriores à revisão.
+O mestre escolhe os participantes. A configuração privada v2 mantém o mesmo
+formato de respostas e acrescenta as cinco fileiras de três cartas (imagens WebP)
+e as inscrições revisadas. As imagens só são entregues ao lado A quando reveladas.
+
 ### Publicação e testes
 
 1. Aplique a migration `20261121190639_dilema_seis_portas.sql` ao banco ParaDocx
