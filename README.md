@@ -122,8 +122,8 @@ clientes. Selecione a sessão e clique em **Tornar esta sessão ativa**; abra ca
 prova pelo painel. Jogadores acessam **Mecânicas** usando seus links individuais.
 
 - Sangue: quatro válvulas, validação individual e fila de sinais acionada pelo mestre.
-- Morte: controle de cinco fileiras físicas e frase cooperativa de quinze posições;
-  monte as cartas no Roblox na disposição fornecida no guia privado.
+- Morte: cinco fileiras digitais de cartas e frase cooperativa de quinze posições;
+  ambas as partes funcionam no site, sem mapa físico.
 - Conhecimento: 26 sigilos recortados do alfabeto e conferência por posição.
 - Energia: painel independente de seis esferas, intertravamentos e três cliques.
 - Medo: quatro documentos de recompensa entregues pelo mestre, tabuleiro compartilhado.
@@ -141,19 +141,22 @@ combate nem requer integração com Roblox.
 - Sangue: os três sinais de suspense são sintetizados no navegador. Cada jogador
   deve clicar em **Ativar e testar áudio** uma vez. O resultado textual é exclusivo
   do mestre; a conclusão da prova é manual.
-- Morte: o mestre revela uma fileira de cartas, designa um selecionador do lado A
-  e confere a escolha. O lado B recebe um número de conferências por pessoa em
+- Morte: o mestre revela ou oculta cada posição (esquerda, centro, direita) para
+  um investigador do lado A ou todo o grupo, designa quem pode selecionar uma
+  carta revelada e confere a escolha. Cada carta pode ser ampliada. O lado B recebe um número de conferências por pessoa em
   cada rodada; abrir uma nova rodada preserva as palavras confirmadas.
 - Conhecimento: libere uma palavra por vez e escolha os participantes autorizados.
   Cada participante tem três conferências por rodada; os sigilos já confirmados
-  permanecem válidos. Libere a palavra seguinte após concluir a atual.
+  permanecem válidos. Libere a palavra seguinte após concluir a atual. Os sigilos
+  liberados podem ser ampliados mesmo por quem não está autorizado a jogar.
 - Energia: autorize os investigadores que podem usar o painel; retirar autorização
   preserva o estado individual. Os intertravamentos não têm explicações no botão.
 
 Os controles começam bloqueados, inclusive em sessões anteriores à revisão.
 O mestre escolhe os participantes. A configuração privada v2 mantém o mesmo
 formato de respostas e acrescenta as cinco fileiras de três cartas (imagens WebP)
-e as inscrições revisadas. As imagens só são entregues ao lado A quando reveladas.
+e as inscrições revisadas. As imagens só são entregues a cada investigador do
+lado A quando reveladas para ele. Sessões anteriores preservam fileiras já abertas.
 
 ### Publicação e testes
 

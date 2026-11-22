@@ -63,10 +63,23 @@ test('energia: exactly one solution across all 216 sequences; blocked actions co
  for(const key of wins[0])s=move(s,player('p1'),'energy-click','energia',{button:key}).state;assert.equal(s.stages.energia.status,'concluído');
 });
 test('Lado A: só vê cartas liberadas, só o escolhido seleciona, mestre confirma e nova fileira fica oculta',()=>{
- let s=open(fresh(),'morte');assert.equal(view(s,'p1').cards.length,0);s=move(s,master,'death-selector','morte',{player:'p2'}).state;s=move(s,master,'death-release','morte').state;
- assert.equal(view(s,'p1').cards.length,3);assert.equal(view(s,'p4').cards,undefined);assert.equal(view(s,'p1').mayChoose,false);assert.equal(view(s,'p2').mayChoose,true);assert.throws(()=>move(s,player('p1'),'death-select','morte',{choice:config.path[0]}));
- s=move(s,player('p2'),'death-select','morte',{choice:config.path[0]}).state;assert.equal(s.stages.morte.rows,0);assert.equal(view(s,'p3').selected,config.path[0]);assert.throws(()=>move(s,player('p2'),'death-select','morte',{choice:'C'}));
- s=move(s,master,'death-row','morte',{choice:'pending'}).state;assert.equal(s.stages.morte.rows,1);assert.equal(view(s,'p1').cards.length,0);
+ let s=open(fresh(),'morte');assert.deepEqual(view(s,'p1').cards,[null,null,null]);s=move(s,master,'death-selector','morte',{player:'p2'}).state;
+ const right=config.path[0],index=['E','C','D'].indexOf(right),other=['E','C','D'].find(c=>c!==right);
+ assert.throws(()=>move(s,master,'death-release','morte',{choice:right,player:'p4'}));
+ assert.throws(()=>move(s,player('p1'),'death-release','morte',{choice:right,player:'all'}));
+ s=move(s,master,'death-release','morte',{choice:right,player:'p2'}).state;
+ assert.equal(view(s,'p2').cards[index],config.cards[0][index]);assert.equal(view(s,'p2').cards.filter(Boolean).length,1);assert.deepEqual(view(s,'p1').cards,[null,null,null]);assert.equal(view(s,'p4').cards,undefined);assert.equal(view(s,'p1').mayChoose,false);assert.equal(view(s,'p2').mayChoose,true);
+ assert.throws(()=>move(s,player('p2'),'death-select','morte',{choice:other}));
+ s=move(s,master,'death-release','morte',{choice:other,player:'all'}).state;assert.equal(view(s,'p1').cards.filter(Boolean).length,1);assert.equal(view(s,'p3').cards.filter(Boolean).length,1);assert.equal(view(s,'p2').cards.filter(Boolean).length,2);
+ s=move(s,master,'death-hide','morte',{choice:other,player:'p2'}).state;assert.equal(view(s,'p2').cards.filter(Boolean).length,1);assert.equal(view(s,'p3').cards.filter(Boolean).length,1);
+ assert.throws(()=>move(s,player('p1'),'death-select','morte',{choice:other}));
+ s=move(s,player('p2'),'death-select','morte',{choice:right}).state;assert.equal(s.stages.morte.rows,0);assert.equal(view(s,'p3').selected,null);assert.equal(view(s,'p3').pending,true);assert.equal(view(s,'p2').selected,right);assert.throws(()=>move(s,player('p2'),'death-select','morte',{choice:other}));
+ s=move(s,master,'death-row','morte',{choice:'pending'}).state;assert.equal(s.stages.morte.rows,1);assert.deepEqual(view(s,'p1').cards,[null,null,null]);assert.deepEqual(view(s,'p2').cards,[null,null,null]);
+});
+test('Sessões anteriores preservam a fileira já revelada; novas fileiras voltam a ficar ocultas',()=>{
+ let s=open(fresh(),'morte');delete s.stages.morte.deathA.reveals;s.stages.morte.deathA.released=true;
+ assert.equal(view(s,'p1').cards.filter(Boolean).length,3);assert.equal(view(s,'p3').cards.filter(Boolean).length,3);assert.equal(view(s,'p4').cards,undefined);
+ s=move(s,master,'death-row','morte',{choice:'manual'}).state;assert.deepEqual(view(s,'p2').cards,[null,null,null]);
 });
 test('Conhecimento: três checagens por rodada, só autorizados e uma palavra liberada',()=>{
  let s=open(fresh(),'conhecimento');s=move(s,master,'glyph-release','conhecimento').state;s=move(s,master,'glyph-allow','conhecimento',{players:['p1']}).state;const v=view(s,'p1');
