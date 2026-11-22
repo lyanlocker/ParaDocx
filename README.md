@@ -125,7 +125,7 @@ prova pelo painel. Jogadores acessam **Mecânicas** usando seus links individuai
 - Morte: cinco fileiras digitais de cartas e frase cooperativa de quinze posições;
   ambas as partes funcionam no site, sem mapa físico.
 - Conhecimento: 26 sigilos recortados do alfabeto e conferência por posição.
-- Energia: painel independente de seis esferas, intertravamentos e três cliques.
+- Energia: painel independente de seis esferas, circuitos condicionais e três cliques.
 - Medo: quatro documentos de recompensa entregues pelo mestre, tabuleiro compartilhado.
 
 O backend usa o mesmo serviço `player-access` para autenticar o token individual
@@ -150,7 +150,8 @@ combate nem requer integração com Roblox.
   permanecem válidos. Libere a palavra seguinte após concluir a atual. Os sigilos
   liberados podem ser ampliados mesmo por quem não está autorizado a jogar.
 - Energia: autorize os investigadores que podem usar o painel; retirar autorização
-  preserva o estado individual. Os intertravamentos não têm explicações no botão.
+  preserva o estado individual. C e D alternam luzes mesmo quando o circuito
+  principal está indisponível; as condições não aparecem nos botões.
 
 Os controles começam bloqueados, inclusive em sessões anteriores à revisão.
 O mestre escolhe os participantes. A configuração privada v2 mantém o mesmo
