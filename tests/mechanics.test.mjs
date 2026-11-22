@@ -51,14 +51,19 @@ test('conhecimento: glyph mapping stays private; repeated glyphs, accents and co
  }
  assert.equal(s.stages.conhecimento.status,'concluído');assert.equal(s.stages.conhecimento.confirmed[1][1],s.stages.conhecimento.confirmed[1][4]);
 });
-test('energia: exactly one solution across all 216 sequences; blocked actions consume a click',()=>{
+test('energia: all buttons toggle lights on every press; exactly one solution across 216 sequences',()=>{
+ for(let state=0;state<64;state++)for(const key of Object.keys(wiring)){
+  const lights=Array.from({length:6},(_,i)=>Boolean(state&(1<<i))),result=energyStep(lights,key);
+  assert.notDeepEqual(result.lights,lights,`botão ${key}, estado ${state}`);assert.equal(result.blocked,false);
+ }
  const wins=[];for(const a of Object.keys(wiring))for(const b of Object.keys(wiring))for(const c of Object.keys(wiring)){
   const lights=[a,b,c].reduce((l,key)=>energyStep(l,key).lights,Array(6).fill(false));if(lights.every(Boolean))wins.push([a,b,c]);
  }
- assert.equal(wins.length,1);let s=open(fresh(),'energia');
+ assert.deepEqual(wins,[['B','C','D']]);let s=open(fresh(),'energia');
  assert.throws(()=>move(s,player('p1'),'energy-click','energia',{button:'C'}));s=move(s,master,'energy-allow','energia',{players:['p1']}).state;
- s=move(s,player('p1'),'energy-click','energia',{button:'C'}).state;assert.equal(s.stages.energia.players.p1.clicks[0].blocked,true);assert.ok(s.stages.energia.players.p1.lights.every(x=>!x));
- for(const key of ['C','C'])s=move(s,player('p1'),'energy-click','energia',{button:key}).state;
+ s=move(s,player('p1'),'energy-click','energia',{button:'C'}).state;assert.equal(view(s,'p1').mine.clicks[0].blocked,false);assert.deepEqual(view(s,'p1').mine.lights,[false,true,true,false,false,false]);
+ s=move(s,player('p1'),'energy-click','energia',{button:'C'}).state;assert.ok(view(s,'p1').mine.lights.every(x=>!x));
+ s=move(s,player('p1'),'energy-click','energia',{button:'D'}).state;assert.deepEqual(view(s,'p1').mine.lights,[false,false,false,false,false,true]);
  assert.equal(s.stages.energia.players.p1.used,1);s=move(s,player('p1'),'energy-next','energia').state;assert.equal(s.stages.energia.players.p1.clicks.length,0);
  for(const key of wins[0])s=move(s,player('p1'),'energy-click','energia',{button:key}).state;assert.equal(s.stages.energia.status,'concluído');
 });

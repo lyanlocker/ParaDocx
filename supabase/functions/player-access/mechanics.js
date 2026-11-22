@@ -25,8 +25,10 @@ export function validateConfig(c){
 }
 export function energyStep(lights,button){
  assert(Object.hasOwn(wiring,button));
- const blocked=button==='C'&&!lights[0]||button==='D'&&!(lights[2]&&lights[4]);
- return {blocked,lights:blocked?[...lights]:lights.map((v,i)=>wiring[button].includes(i+1)?!v:v)};
+ // C and D still have conditional circuits, but every press toggles at least
+ // one sphere. The partial circuit preserves the unique three-press solution.
+ const switched=button==='C'&&!lights[0]?[2,3]:button==='D'&&!(lights[2]&&lights[4])?[6]:wiring[button];
+ return {blocked:false,lights:lights.map((v,i)=>switched.includes(i+1)?!v:v)};
 }
 function individual(stage,limit){
  if(stage==='sangue')return {used:0,limit,inputs:blank(4)};
