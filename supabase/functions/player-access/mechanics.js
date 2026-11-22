@@ -4,6 +4,7 @@ export const stages=['sangue','morte','conhecimento','energia','medo'];
 export const words=['RITUAL','CRIAR','IMPOSSÍVEL','ELEMENTO'];
 export const wiring={A:[1,2,3],B:[1,2,4],C:[2,3,5],D:[2,6],E:[1,3,4],F:[1,5,6]};
 const blank=n=>Array(n).fill(null);
+const cardPositions=['E','C','D'];
 const assert=(v,message='Ação inválida.')=>{if(!v)throw new Error(message);};
 const int=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max;
 const png=v=>typeof v==='string'&&v.length<250000&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(v);
@@ -36,16 +37,19 @@ function individual(stage,limit){
 function makeStage(stage,ids,config,limit=3){
  const base={status:'bloqueado',players:Object.fromEntries(ids.map(id=>[id,individual(stage,limit)])),completedAt:null,generation:crypto.randomUUID()};
  if(stage==='sangue')return {...base,submissions:[],audio:[]};
- if(stage==='morte')return {...base,rows:0,confirmed:0,slots:blank(15),bank:shuffle(config.bank),choices:[],deathA:{released:false,selector:null,pending:null},deathB:newRound(3)};
+ if(stage==='morte')return {...base,rows:0,confirmed:0,slots:blank(15),bank:shuffle(config.bank),choices:[],deathA:{released:false,reveals:{},selector:null,pending:null},deathB:newRound(3)};
  if(stage==='conhecimento')return {...base,confirmed:words.map(w=>blank(w.length)),bank:shuffle(config.glyphs.map(g=>g.id)),glyphTurn:{word:-1,...newRound(3)}};
  if(stage==='energia')return {...base,energyAllowed:[]};
  if(stage==='medo')return {...base,slots:blank(4),confirmed:blank(4),verify:false};
  return base;
 }
 function newRound(limit=3){return {number:0,limit,allowed:[],used:{}};}
-export function normalizeControls(state){
+export function normalizeControls(state,ids=[]){
  const d=state.stages.morte,g=state.stages.conhecimento,e=state.stages.energia;
  d.deathA??={released:false,selector:null,pending:null};d.deathB??=newRound(3);
+ // Old sessions may already have an entire row revealed. Preserve that visibility.
+ d.deathA.reveals??=d.deathA.released?Object.fromEntries(ids.slice(0,3).map(id=>[id,[...cardPositions]])):{};
+ d.deathA.released=Object.values(d.deathA.reveals).some(list=>list.length>0);
  const progressed=g.confirmed.findIndex(row=>row.some(Boolean));
  g.glyphTurn??={word:progressed<0?-1:g.confirmed.reduce((last,row,i)=>row.some(Boolean)?i:last,-1),...newRound(3)};
  e.energyAllowed??=[];
@@ -57,7 +61,7 @@ const allowed=(r,who)=>r.number>0&&r.allowed.includes(who)&&(r.used[who]||0)<r.l
 const checkRound=(r,who)=>assert(allowed(r,who),'Aguarde sua vez ou uma nova rodada autorizada pelo mestre.');
 const setAllowed=(r,ids,selected)=>{assert(Array.isArray(selected)&&new Set(selected).size===selected.length&&selected.every(id=>ids.includes(id)));r.allowed=selected;};
 export function createState(ids,config,limit=3){
- return normalizeControls({active:null,paused:false,stages:Object.fromEntries(stages.map(s=>[s,makeStage(s,ids,config,limit)])),papers:{},history:[],presence:{}});
+ return normalizeControls({active:null,paused:false,stages:Object.fromEntries(stages.map(s=>[s,makeStage(s,ids,config,limit)])),papers:{},history:[],presence:{}},ids);
 }
 const open=s=>['aberto','em andamento'].includes(s.status);
 const complete=(s,at,actor)=>{s.status='concluído';s.completedAt=at;s.completedBy=actor;};
@@ -72,7 +76,7 @@ export function reconcile(state,docs,ids){
  return state;
 }
 export function transition(source,config,ids,actor,request,docs=[],now=new Date().toISOString()){
- const state=normalizeControls(structuredClone(source));reconcile(state,docs,ids);
+ const state=normalizeControls(structuredClone(source),ids);reconcile(state,docs,ids);
  const {type,stage=state.active,actionId,payload={}}=request;
  const master=actor.master,who=actor.id;
  assert(master||ids.includes(who),'Acesso indisponível.');
@@ -89,15 +93,20 @@ export function transition(source,config,ids,actor,request,docs=[],now=new Date(
   }else if(type==='pause'){state.paused=!!payload.paused;}
   else if(type==='close'){s.status='encerrado';if(state.active===stage)state.active=null;}
   else if(type==='complete'){complete(s,now,who);}
-  else if(type==='reset'){state.stages[stage]=makeStage(stage,ids,config,stage==='energia'?(s.players[ids[0]]?.limit||3):3);normalizeControls(state);if(state.active===stage)state.active=null;}
+  else if(type==='reset'){state.stages[stage]=makeStage(stage,ids,config,stage==='energia'?(s.players[ids[0]]?.limit||3):3);normalizeControls(state,ids);if(state.active===stage)state.active=null;}
   else if(type==='restore'){
    assert(['sangue','energia'].includes(stage)&&ids.includes(payload.player));
    const p=s.players[payload.player];p.limit+=1;detail={player:payload.player};
   }else if(type==='limit'){
    assert(stage==='energia'&&int(payload.limit,1,20));for(const p of Object.values(s.players))p.limit=payload.limit;
-  }else if(type==='death-release'){
+  }else if(type==='death-release'||type==='death-hide'){
    assert(stage==='morte'&&open(s)&&s.rows<5&&config.cards?.[s.rows]?.length===3,'Fileira indisponível.');
-   assert(!s.deathA.pending,'Confira a seleção pendente antes de liberar novamente.');s.deathA.released=true;changeTurn(s);
+   assert(!s.deathA.pending,'Confira a seleção pendente antes de alterar as cartas.');
+   assert(cardPositions.includes(payload.choice),'Escolha esquerda, centro ou direita.');
+   const recipients=payload.player==='all'?ids.slice(0,3):[payload.player];
+   assert(recipients.every(id=>ids.slice(0,3).includes(id)),'Selecione um investigador do lado A.');
+   for(const id of recipients){const revealed=s.deathA.reveals[id]||[];s.deathA.reveals[id]=type==='death-release'?[...new Set([...revealed,payload.choice])]:revealed.filter(choice=>choice!==payload.choice);}
+   s.deathA.released=Object.values(s.deathA.reveals).some(list=>list.length>0);detail={row:s.rows+1,choice:payload.choice,recipients};changeTurn(s);
   }else if(type==='death-selector'){
    assert(stage==='morte'&&(payload.player===null||ids.slice(0,3).includes(payload.player)));s.deathA.selector=payload.player;changeTurn(s);
   }else if(type==='death-row'){
@@ -106,7 +115,7 @@ export function transition(source,config,ids,actor,request,docs=[],now=new Date(
    assert(['E','C','D','manual'].includes(choice),'Aguarde a escolha do investigador.');
    const correct=choice==='manual'||choice===config.path[s.rows];
    s.choices.push({row:s.rows+1,choice,correct,at:now,player:s.deathA.pending?.player||null});if(correct)s.rows++;
-   s.deathA.released=false;s.deathA.pending=null;changeTurn(s);
+   s.deathA.released=false;s.deathA.reveals={};s.deathA.pending=null;changeTurn(s);
    if(s.rows===5&&s.confirmed===15)complete(s,now,who);
   }else if(type==='death-round'){
    assert(stage==='morte'&&open(s)&&int(payload.limit,1,15));s.deathB={...newRound(payload.limit),number:s.deathB.number+1};changeTurn(s);
@@ -152,7 +161,7 @@ export function transition(source,config,ids,actor,request,docs=[],now=new Date(
    }
   }else if(type==='death-select'){
    assert(stage==='morte'&&ids.indexOf(who)<3&&s.rows<5&&s.deathA.released&&s.deathA.selector===who&&!s.deathA.pending,'Aguarde o mestre liberar sua escolha.');
-   assert(['E','C','D'].includes(payload.choice));s.deathA.pending={choice:payload.choice,player:who};detail={row:s.rows+1,choice:payload.choice};
+   assert(cardPositions.includes(payload.choice)&&s.deathA.reveals[who]?.includes(payload.choice),'O mestre ainda não revelou essa carta para você.');s.deathA.pending={choice:payload.choice,player:who};detail={row:s.rows+1,choice:payload.choice};
   }else if(type==='death-place'||type==='death-check'){
    assert(stage==='morte'&&ids.indexOf(who)>=3&&p,'Somente o lado B resolve a frase.');
    checkRound(s.deathB,who);
@@ -203,12 +212,15 @@ export function transition(source,config,ids,actor,request,docs=[],now=new Date(
 const cues={CERTO:'pulse-01',BAIXO:'pulse-02',ALTO:'pulse-03'};
 const roundView=(r,who)=>({number:r.number,limit:r.limit,remaining:Math.max(0,r.limit-(r.used[who]||0)),mayPlay:allowed(r,who)});
 export function playerView(row,config,who,docs,ids,validIds=ids){
- const state=reconcile(normalizeControls(structuredClone(row.state)),docs,validIds),stage=state.active,s=state.stages[stage];
+ const state=reconcile(normalizeControls(structuredClone(row.state),ids),docs,validIds),stage=state.active,s=state.stages[stage];
  const view={id:row.id,active:stage,paused:state.paused,stageStatus:s?.status,training:row.training,generation:s?.generation};
  if(!s||!validIds.includes(who))return view;
  view.mine=s.players[who];
  if(stage==='sangue')view.audio=s.audio.map(event=>({id:event.id,at:event.at,signals:event.signals.map(signal=>({cue:cues[signal.type]}))}));
- if(stage==='morte')Object.assign(view,{turn:s.turn,side:ids.indexOf(who)<3?'A':'B',rows:s.rows,confirmed:s.confirmed,...(ids.indexOf(who)>=3?{slots:s.slots,bank:s.bank,round:roundView(s.deathB,who)}:{released:s.deathA.released,mayChoose:s.deathA.released&&s.deathA.selector===who&&!s.deathA.pending,selected:s.deathA.pending?.choice||null,cards:s.deathA.released&&s.rows<5?(config.cards?.[s.rows]||[]):[]})});
+ if(stage==='morte'){
+  const reveals=s.deathA.reveals[who]||[], pending=s.deathA.pending;
+  Object.assign(view,{turn:s.turn,side:ids.indexOf(who)<3?'A':'B',rows:s.rows,confirmed:s.confirmed,...(ids.indexOf(who)>=3?{slots:s.slots,bank:s.bank,round:roundView(s.deathB,who)}:{released:reveals.length>0,mayChoose:reveals.length>0&&s.deathA.selector===who&&!pending,pending:!!pending,selected:pending&&reveals.includes(pending.choice)?pending.choice:null,cards:s.rows<5?cardPositions.map((pos,i)=>reveals.includes(pos)?config.cards?.[s.rows]?.[i]||null:null):[]})});
+ }
  if(stage==='conhecimento'){const w=s.glyphTurn.word;view.mine={...view.mine,inputs:view.mine.inputs.slice(0,w+1),confirmed:view.mine.confirmed.slice(0,w+1),checked:view.mine.checked.slice(0,w+1)};Object.assign(view,{turn:s.turn,word:w,round:roundView(s.glyphTurn,who),words:words.slice(0,w+1),confirmed:s.confirmed.slice(0,w+1),glyphs:w>=0?s.bank.map(id=>{const g=config.glyphs.find(x=>x.id===id);return {id,image:g.image};}):[]});}
  if(stage==='energia')Object.assign(view,{wiring,turn:s.turn,mayPlay:s.energyAllowed.includes(who)});
  if(stage==='medo'){
