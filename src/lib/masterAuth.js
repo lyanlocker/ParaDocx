@@ -1,11 +1,9 @@
+import {functionUrl,functionHeaders} from './backend.js';
 export async function masterAuth(action, values) {
-  const response = await fetch(import.meta.env.VITE_SUPABASE_URL + '/functions/v1/master-access', {
+  const response = await fetch(functionUrl('master-access'), {
     method: 'POST',
     cache: 'no-store',
-    headers: {
-      'Content-Type':'application/json',
-      'apikey':import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-    },
+    headers: functionHeaders(),
     body:JSON.stringify({action,...values})
   });
   const payload=await response.json();
