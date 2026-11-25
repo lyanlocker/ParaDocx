@@ -37,9 +37,39 @@ await check('neon', async () => {
 });
 await Promise.all([
   check('firebaseAuth', async () => {
-    const { app, uid } = firebaseSettings();
-    const user = await getAuth(app).getUser(uid);
-    return !!identity && user.email?.toLowerCase() === identity.email.toLowerCase() && !user.disabled;
+    let credential, config;
+    try { credential = JSON.parse(process.env.PARADOCX_FIREBASE_SERVICE_ACCOUNT || 'null'); }
+    catch { results.firebaseAuthReason = 'service_account_json_invalid'; return false; }
+    try { config = JSON.parse(process.env.PARADOCX_FIREBASE_WEB_CONFIG || 'null'); }
+    catch { results.firebaseAuthReason = 'web_config_json_invalid'; return false; }
+    if (!credential?.project_id || !credential?.private_key || !credential?.client_email) {
+      results.firebaseAuthReason = 'service_account_fields_missing'; return false;
+    }
+    if (!config?.projectId || !config?.apiKey) {
+      results.firebaseAuthReason = 'web_config_fields_missing'; return false;
+    }
+    if (config.projectId !== credential.project_id) {
+      results.firebaseAuthReason = 'firebase_project_mismatch'; return false;
+    }
+    if (!process.env.PARADOCX_MASTER_FIREBASE_UID) {
+      results.firebaseAuthReason = 'master_uid_missing'; return false;
+    }
+    let settings;
+    try { settings = firebaseSettings(); }
+    catch { results.firebaseAuthReason = 'firebase_admin_init_failed'; return false; }
+    try {
+      const user = await getAuth(settings.app).getUser(settings.uid);
+      if (user.disabled) { results.firebaseAuthReason = 'master_user_disabled'; return false; }
+      if (!identity || user.email?.toLowerCase() !== identity.email.toLowerCase()) {
+        results.firebaseAuthReason = 'master_email_mismatch'; return false;
+      }
+      results.firebaseAuthReason = 'ok';
+      return true;
+    } catch (error) {
+      const safeCodes = ['auth/user-not-found', 'auth/invalid-uid', 'auth/invalid-credential', 'auth/insufficient-permission', 'auth/project-not-found'];
+      results.firebaseAuthReason = safeCodes.includes(error?.code) ? error.code : 'firebase_admin_lookup_failed';
+      return false;
+    }
   }),
   check('storage', async () => {
     const client = new S3Client({
