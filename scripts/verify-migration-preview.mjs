@@ -8,10 +8,11 @@ import { getAuth } from 'firebase-admin/auth';
 import { getDatabase } from 'firebase-admin/database';
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
-if (process.env.VERCEL_ENV !== 'preview' ||
-    process.env.VERCEL_GIT_COMMIT_REF !== 'migration/neon-firebase-staging' ||
-    process.env.PARADOCX_BACKEND !== 'neon') {
-  console.log('PARADOCX_VALIDATION: skipped outside isolated preview');
+const production = process.env.VERCEL_ENV === 'production';
+const preview = process.env.VERCEL_ENV === 'preview' &&
+  process.env.VERCEL_GIT_COMMIT_REF === 'migration/neon-firebase-staging';
+if ((!preview && !production) || process.env.PARADOCX_BACKEND !== 'neon') {
+  console.log('PARADOCX_VALIDATION: skipped outside migration targets');
   process.exit(0);
 }
 const results = {};
@@ -30,7 +31,7 @@ const equivalent = (a, b) => JSON.stringify(normalize(a)) === JSON.stringify(nor
 let identity;
 await check('neon', async () => {
   const [connection] = await rows('SELECT current_user AS role');
-  if (connection.role !== 'paradocx_preview_runtime') return false;
+  if (connection.role !== (production ? 'paradocx_production_runtime' : 'paradocx_preview_runtime')) return false;
   [identity] = await rows("SELECT user_id,email FROM public.master_identity WHERE singleton=true AND username='mestre01'");
   return !!identity?.user_id && !!identity?.email;
 });
@@ -62,13 +63,27 @@ if (results.neon && results.firebaseAuth && results.storage) {
     const current = await db.getRulesJSON();
     if (equivalent(current, expected)) return true;
     // Never replace a customized ruleset or an already-open database.
-    if (!equivalent(current, { rules: { '.read': false, '.write': false } })) return false;
+    if (!preview || !equivalent(current, { rules: { '.read': false, '.write': false } })) return false;
     await db.setRules(expected);
     return equivalent(await db.getRulesJSON(), expected);
   });
 } else {
   results.firebaseRealtimeRules = false;
 }
+if (production && process.env.PARADOCX_CUTOVER_SYNC === '1') {
+  results.originalAssets = false;
+  if (results.neon && results.firebaseAuth && results.storage && results.firebaseRealtimeRules) {
+    try {
+      const { syncOriginalAssets } = await import('./cutover-sync-assets.mjs');
+      const counts = await syncOriginalAssets();
+      results.originalAssets = true;
+      console.log('PARADOCX_ASSET_COPY ' + JSON.stringify(counts));
+    } catch { /* fail closed; no errors containing credentials are emitted */ }
+  }
+}
 // Log only fixed boolean outcomes: no configuration values or user records.
 console.log('PARADOCX_VALIDATION ' + JSON.stringify(results));
-process.exit(results.neon && results.firebaseAuth && results.storage ? 0 : 1);
+const ready = results.neon && results.firebaseAuth && results.storage &&
+  (!production || results.firebaseRealtimeRules) &&
+  (results.originalAssets !== false);
+process.exit(ready ? 0 : 1);

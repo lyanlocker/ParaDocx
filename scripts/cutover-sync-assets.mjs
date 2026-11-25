@@ -1,0 +1,72 @@
+// One-time cutover: restore exact original private files, never delete objects.
+// Only a Production build with the explicit migration flag may invoke this.
+import { createHash } from 'node:crypto';
+import { createClient } from '@supabase/supabase-js';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+
+const bucket = 'handout-assets';
+const assetPath = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(?:png|jpe?g|webp)$/i;
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+const mimeFor = path => /\.png$/i.test(path) ? 'image/png' : /\.webp$/i.test(path) ? 'image/webp' : 'image/jpeg';
+
+export async function syncOriginalAssets() {
+  if (process.env.VERCEL_ENV !== 'production' ||
+      process.env.PARADOCX_CUTOVER_SYNC !== '1' ||
+      process.env.PARADOCX_BACKEND !== 'neon') throw new Error('Cutover scope not authorized');
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Original storage unavailable');
+  const source = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  }).storage.from(bucket);
+  const destination = new S3Client({
+    endpoint: process.env.PARADOCX_S3_ENDPOINT, region: process.env.PARADOCX_S3_REGION,
+    forcePathStyle: true, credentials: {
+      accessKeyId: process.env.PARADOCX_S3_KEY,
+      secretAccessKey: process.env.PARADOCX_S3_SECRET
+    }
+  });
+  async function list(prefix = '') {
+    const objects = [];
+    const folders = [];
+    for (let offset = 0; ; offset += 100) {
+      const { data, error } = await source.list(prefix, { limit: 100, offset, sortBy: { column: 'name', order: 'asc' } });
+      if (error || !Array.isArray(data)) throw new Error('Original storage listing failed');
+      for (const item of data) {
+        const path = prefix ? prefix + '/' + item.name : item.name;
+        if (item.id == null) folders.push(path);
+        else objects.push({ path, size: item.metadata?.size });
+      }
+      if (data.length < 100) break;
+    }
+    for (const folder of folders) {
+      if (!/^[0-9a-f-]{36}$/i.test(folder)) throw new Error('Unexpected storage folder');
+      objects.push(...await list(folder));
+    }
+    return objects;
+  }
+  try {
+    const all = await list();
+    if (!all.length || all.some(o => !assetPath.test(o.path))) throw new Error('Unexpected source assets');
+    let copied = 0;
+    for (const { path, size } of all) {
+      const { data, error } = await source.download(path);
+      if (error || !data) throw new Error('Original download failed');
+      const bytes = Buffer.from(await data.arrayBuffer());
+      if (!bytes.length || (size != null && bytes.length !== Number(size))) throw new Error('Original asset size mismatch');
+      const digest = hash(bytes);
+      let same = false;
+      try {
+        const current = await destination.send(new GetObjectCommand({ Bucket: bucket, Key: path }));
+        same = hash(await current.Body.transformToByteArray()) === digest;
+      } catch (error) {
+        if (![404].includes(error.$metadata?.httpStatusCode) && !['NoSuchKey','NoSuchObject','NotFound'].includes(error.name)) throw error;
+      }
+      if (!same) {
+        await destination.send(new PutObjectCommand({ Bucket: bucket, Key: path, Body: bytes, ContentType: mimeFor(path), CacheControl: 'private, no-store' }));
+        copied++;
+      }
+      const verified = await destination.send(new GetObjectCommand({ Bucket: bucket, Key: path }));
+      if (hash(await verified.Body.transformToByteArray()) !== digest) throw new Error('Asset verification failed');
+    }
+    return { verified: all.length, copied };
+  } finally { destination.destroy(); }
+}
