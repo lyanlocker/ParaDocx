@@ -1,5 +1,7 @@
 
 import React, {useEffect,useState} from 'react';
+import {functionUrl,functionHeaders} from './lib/backend.js';
+import {watchRefresh} from './lib/realtime.js';
 import {templates} from './data/templates';
 import DocumentCanvas from './DocumentCanvas.jsx';
 import {requiresUV} from './lib/elements.js';
@@ -36,9 +38,9 @@ function PlayerSheet({document,side,token,affinity}) {
     setBackground('');setAssetError('');
     if(!path){setLoading(false);return;}
     setLoading(true);
-    fetch(import.meta.env.VITE_SUPABASE_URL+'/functions/v1/player-access',{
+    fetch(functionUrl('player-access'),{
       method:'POST',cache:'no-store',
-      headers:{'Content-Type':'application/json','apikey':import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY},
+      headers:functionHeaders(),
       body:JSON.stringify({action:'asset',token,document_id:document.id,side})
     }).then(async response=>{
       if(!response.ok)throw new Error('Imagem privada indisponível para este jogador.');
@@ -55,9 +57,9 @@ function PlayerSheet({document,side,token,affinity}) {
     let active=true;const urls=[];setImageUrls({});
     const controller=new AbortController();
     Promise.all(JSON.parse(imageIds).map(async ([id])=>{
-      const response=await fetch(import.meta.env.VITE_SUPABASE_URL+'/functions/v1/player-access',{
+      const response=await fetch(functionUrl('player-access'),{
         method:'POST',cache:'no-store',signal:controller.signal,
-        headers:{'Content-Type':'application/json','apikey':import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY},
+        headers:functionHeaders(),
         body:JSON.stringify({action:'asset',token,document_id:document.id,side,layer_id:id})
       });
       if(!response.ok)throw new Error('Uma imagem não pôde ser carregada.');
@@ -77,9 +79,9 @@ function PlayerSheet({document,side,token,affinity}) {
   </>;
 }
 const call = async (token,action,other={}) => {
-  const response=await fetch(import.meta.env.VITE_SUPABASE_URL+'/functions/v1/player-access',{
+  const response=await fetch(functionUrl('player-access'),{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY},
+    headers:functionHeaders(),
     body:JSON.stringify({token,action,...other}),
     cache:'no-store'
   });
@@ -99,11 +101,9 @@ export default function PlayerPortal({token}){
         if(alive){setState(result);setError('');}
       } catch(e){if(alive){setError(e.message);setState(null);}}
     }
-    setSelected(null);setTab('inventory');setState(null);setError('');reload();
-    const onVisibility=()=>{if(!window.document.hidden)reload();};
-    window.document.addEventListener('visibilitychange',onVisibility);
-    const interval=setInterval(()=>{if(!window.document.hidden)reload();},12000);
-    return ()=>{alive=false;clearInterval(interval);window.document.removeEventListener('visibilitychange',onVisibility)};
+    setSelected(null);setTab('inventory');setState(null);setError('');
+    const dispose=watchRefresh(reload,12000,{token});
+    return ()=>{alive=false;dispose();};
   },[token]);
   async function transfer(d){
     if(!target)return setNotice('Escolha o investigador que receberá o documento.');

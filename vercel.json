@@ -1,0 +1,3 @@
+{
+  "buildCommand": "npm test && node scripts/verify-migration-preview.mjs && npm run build"
+}

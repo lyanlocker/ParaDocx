@@ -12,6 +12,7 @@ import PlayerPortal from './PlayerPortal.jsx';
 import MasterSetup from './MasterSetup.jsx';
 import {MasterMechanics} from './Mechanics.jsx';
 import {masterAuth} from './lib/masterAuth.js';
+import {useNeon} from './lib/backend.js';
 
 const readPlayerToken = () => (window.location.hash.match(/^#\/player\/([a-f0-9]{64})$/) || [])[1] || '';
 const readMasterSetupToken = () => (window.location.hash.match(/^#\/master-setup\/([a-f0-9]{64})$/) || [])[1] || '';
@@ -143,7 +144,7 @@ export default function App() {
     setWorking(true);
     try{
       const auth = await masterAuth('login',{username:'mestre01',password});
-      const {error}=await db.auth.setSession({access_token:auth.access_token,refresh_token:auth.refresh_token});
+      const {error}=await db.auth.setSession(useNeon?auth:{access_token:auth.access_token,refresh_token:auth.refresh_token});
       if(error)throw error;
       setNotice('Bem-vindo ao arquivo do mestre.');
     }catch(error){setNotice(error.message);}
@@ -327,7 +328,7 @@ export default function App() {
       for(const page of ['front','back']){
         const blob=pendingAssets[page]?.blob;
         if(!blob)continue;
-        if(blob.size>5*1024*1024)throw new Error('A imagem '+page+' excede 5 MB após a conversão.');
+        if(blob.size>(useNeon?4:5)*1024*1024)throw new Error('A imagem '+page+' excede o limite após a conversão.');
         const path=campaign.id+'/'+window.crypto.randomUUID()+'.'+uploadExtension(blob);
         const {error:uploadError}=await db.storage.from('handout-assets').upload(path,blob,{
           contentType:blob.type,cacheControl:'3600',upsert:false
@@ -339,7 +340,7 @@ export default function App() {
       for(const page of ['front','back'])for(const layer of nextPages[page]){
         const blob=pendingAssets['layer:'+layer.id]?.blob;
         if(layer.kind!=='image'||!blob)continue;
-        if(blob.size>5*1024*1024)throw new Error('Uma imagem excede 5 MB após a conversão.');
+        if(blob.size>(useNeon?4:5)*1024*1024)throw new Error('Uma imagem excede o limite após a conversão.');
         const path=campaign.id+'/'+window.crypto.randomUUID()+'.'+uploadExtension(blob);
         const {error}=await db.storage.from('handout-assets').upload(path,blob,{contentType:blob.type,upsert:false});
         if(error)throw error;uploaded.push(path);layer.assetPath=path;

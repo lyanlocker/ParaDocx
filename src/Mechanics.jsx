@@ -1,5 +1,7 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {supabase as db} from './lib/supabase';
+import {functionUrl,functionHeaders} from './lib/backend.js';
+import {watchRefresh} from './lib/realtime.js';
 import {bloodCue,playCue} from './lib/bloodAudio.js';
 import './mechanics.css';
 import './mechanics-control.css';
@@ -10,9 +12,9 @@ const title=s=>s?s[0].toUpperCase()+s.slice(1):'';
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isOpen=s=>['aberto','em andamento'].includes(s);
 const request=async (body,token)=>{
- const head={'Content-Type':'application/json','apikey':import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY};
+ const head=functionHeaders();
  if(!token){const {data}=await db.auth.getSession();head.Authorization='Bearer '+data.session?.access_token;}
- const res=await fetch(import.meta.env.VITE_SUPABASE_URL+'/functions/v1/player-access',{method:'POST',headers:head,cache:'no-store',body:JSON.stringify({...body,action:token?'mechanics':'mechanics-master',...(token?{token}:{})})});
+ const res=await fetch(functionUrl('player-access'),{method:'POST',headers:head,cache:'no-store',body:JSON.stringify({...body,action:token?'mechanics':'mechanics-master',...(token?{token}:{})})});
  const data=await res.json();if(!res.ok)throw Object.assign(new Error(data.error||'Falha na comunicação.'),{status:res.status});return data;
 };
 const action=(type,stage,payload={})=>({type,stage,payload,actionId:crypto.randomUUID()});
@@ -24,7 +26,7 @@ function usePanel({token,campaign,id,enabled=true}){
   try{const data=await call('read');if(n===seq.current){setSession(data.session);setError('');}}
   catch(e){if(n===seq.current)setError(e.message);}finally{reading.current=false;}
  },[call]);
- useEffect(()=>{if(!enabled){setSession(null);return;}setSession(null);refresh();const timer=setInterval(refresh,1500);return()=>{clearInterval(timer);seq.current++;};},[refresh,enabled]);
+ useEffect(()=>{if(!enabled){setSession(null);return;}setSession(null);const dispose=watchRefresh(refresh,1500,token?{token}:{campaign,getToken:async()=>{const {data}=await db.auth.getSession();return data.session?.access_token;}});return()=>{dispose();seq.current++;};},[refresh,enabled,token,campaign]);
  const send=async(type,stage,payload={})=>{
   if(pending.current)return;pending.current=true;setBusy(true);const n=++seq.current;
   const next={...action(type,stage,payload),generation:token?session?.generation:session?.state.stages[stage]?.generation,turn:token?session?.turn:session?.state.stages[stage]?.turn};
