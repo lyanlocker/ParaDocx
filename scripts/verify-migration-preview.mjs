@@ -113,7 +113,9 @@ if (production && process.env.PARADOCX_CUTOVER_SYNC === '1') {
         'Original storage listing failed', 'Original storage project mismatch',
         ...['400','401','403','404','429','500','502','503','unknown'].map(status => 'Original storage listing failed: ' + status),
         'Unexpected storage folder', 'Unexpected source assets',
-        'Original download failed', 'Original asset size mismatch', 'Asset verification failed'];
+        'Original download failed', 'Original asset manifest invalid',
+        ...['200','400','401','403','404','429','500','502','503','network','unknown'].map(status => 'Original download failed: ' + status),
+        'Original asset size mismatch', 'Asset verification failed'];
       const safeNames = ['AccessDenied', 'NoSuchBucket', 'NoSuchKey', 'NotFound', 'InvalidAccessKeyId',
         'SignatureDoesNotMatch', 'InvalidArgument', 'Forbidden', 'TimeoutError', 'NetworkingError'];
       results.assetCopyReason = safeMessages.includes(error?.message) ? error.message :
