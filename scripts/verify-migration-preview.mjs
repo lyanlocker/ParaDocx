@@ -108,7 +108,15 @@ if (production && process.env.PARADOCX_CUTOVER_SYNC === '1') {
       const counts = await syncOriginalAssets();
       results.originalAssets = true;
       console.log('PARADOCX_ASSET_COPY ' + JSON.stringify(counts));
-    } catch { /* fail closed; no errors containing credentials are emitted */ }
+    } catch (error) {
+      const safeMessages = ['Cutover scope not authorized', 'Original storage unavailable',
+        'Original storage listing failed', 'Unexpected storage folder', 'Unexpected source assets',
+        'Original download failed', 'Original asset size mismatch', 'Asset verification failed'];
+      const safeNames = ['AccessDenied', 'NoSuchBucket', 'NoSuchKey', 'NotFound', 'InvalidAccessKeyId',
+        'SignatureDoesNotMatch', 'InvalidArgument', 'Forbidden', 'TimeoutError', 'NetworkingError'];
+      results.assetCopyReason = safeMessages.includes(error?.message) ? error.message :
+        safeNames.includes(error?.name) ? error.name : 'asset_transfer_failed';
+    }
   }
 }
 // Log only fixed boolean outcomes: no configuration values or user records.
