@@ -110,7 +110,9 @@ if (production && process.env.PARADOCX_CUTOVER_SYNC === '1') {
       console.log('PARADOCX_ASSET_COPY ' + JSON.stringify(counts));
     } catch (error) {
       const safeMessages = ['Cutover scope not authorized', 'Original storage unavailable',
-        'Original storage listing failed', 'Unexpected storage folder', 'Unexpected source assets',
+        'Original storage listing failed', 'Original storage project mismatch',
+        ...['400','401','403','404','429','500','502','503','unknown'].map(status => 'Original storage listing failed: ' + status),
+        'Unexpected storage folder', 'Unexpected source assets',
         'Original download failed', 'Original asset size mismatch', 'Asset verification failed'];
       const safeNames = ['AccessDenied', 'NoSuchBucket', 'NoSuchKey', 'NotFound', 'InvalidAccessKeyId',
         'SignatureDoesNotMatch', 'InvalidArgument', 'Forbidden', 'TimeoutError', 'NetworkingError'];
