@@ -16,8 +16,19 @@ export async function syncOriginalAssets() {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Original storage unavailable');
   const endpoint = new URL(process.env.SUPABASE_URL);
   if (endpoint.origin !== 'https://eymrckpudysvmlymrlix.supabase.co') throw new Error('Original storage project mismatch');
+  let sourceStatus = 'unknown';
   const source = createClient(endpoint.origin, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false }
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: async (input, init) => {
+      try {
+        const response = await fetch(input, init);
+        sourceStatus = String(response.status);
+        return response;
+      } catch (error) {
+        sourceStatus = 'network';
+        throw error;
+      }
+    } }
   }).storage.from(bucket);
   const destination = new S3Client({
     endpoint: process.env.PARADOCX_S3_ENDPOINT, region: process.env.PARADOCX_S3_REGION,
@@ -26,36 +37,19 @@ export async function syncOriginalAssets() {
       secretAccessKey: process.env.PARADOCX_S3_SECRET
     }
   });
-  async function list(prefix = '') {
-    const objects = [];
-    const folders = [];
-    for (let offset = 0; ; offset += 100) {
-      const { data, error } = await source.list(prefix, { limit: 100, offset, sortBy: { column: 'name', order: 'asc' } });
-      if (error || !Array.isArray(data)) {
-        const status = String(error?.statusCode ?? error?.status ?? '');
-        const safe = ['400','401','403','404','429','500','502','503'].includes(status) ? status : 'unknown';
-        throw new Error('Original storage listing failed: ' + safe);
-      }
-      for (const item of data) {
-        const path = prefix ? prefix + '/' + item.name : item.name;
-        if (item.id == null) folders.push(path);
-        else objects.push({ path, size: item.metadata?.size });
-      }
-      if (data.length < 100) break;
-    }
-    for (const folder of folders) {
-      if (!/^[0-9a-f-]{36}$/i.test(folder)) throw new Error('Unexpected storage folder');
-      objects.push(...await list(folder));
-    }
-    return objects;
-  }
   try {
-    const all = await list();
+    let all;
+    try { all = JSON.parse(process.env.PARADOCX_CUTOVER_ASSET_MANIFEST || 'null'); }
+    catch { throw new Error('Original asset manifest invalid'); }
+    if (!Array.isArray(all)) throw new Error('Original asset manifest invalid');
     if (!all.length || all.some(o => !assetPath.test(o.path))) throw new Error('Unexpected source assets');
     let copied = 0;
     for (const { path, size } of all) {
       const { data, error } = await source.download(path);
-      if (error || !data) throw new Error('Original download failed');
+      if (error || !data) {
+        const status = ['200','400','401','403','404','429','500','502','503','network'].includes(sourceStatus) ? sourceStatus : 'unknown';
+        throw new Error('Original download failed: ' + status);
+      }
       const bytes = Buffer.from(await data.arrayBuffer());
       if (!bytes.length || (size != null && bytes.length !== Number(size))) throw new Error('Original asset size mismatch');
       const digest = hash(bytes);
