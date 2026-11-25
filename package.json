@@ -16,7 +16,7 @@
     "@neondatabase/serverless": "1.2.1",
     "@supabase/supabase-js": "2.57.0",
     "firebase": "13.4.0",
-    "firebase-admin": "14.5.1",
+    "firebase-admin": "13.10.0",
     "pdfjs-dist": "4.10.38",
     "react": "19.1.1",
     "react-dom": "19.1.1"
